@@ -2,12 +2,28 @@
 
 import json
 import requests
+import sys
 
 
 settingsfile    = 'settings.json'
 
 
 ## Functions
+def return_url ( settingsobject):
+    
+    s = settingsobject['gns3']
+    a = sys.argv
+    if 'start' in a[1:]:
+        gns3call = 'nodesstarturi'
+    elif 'stop' in a[1:]:
+        gns3call = 'nodesstopuri'
+    else:
+        print('please provide GNS3 api call type "start/stop"\n')
+        sys.exit()
+        
+    url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']+"/"+s['project']+"/"+s[gns3call]
+    return url
+
 def readsettings ( jsonfile ):
 
     try:
@@ -37,8 +53,7 @@ def request ( url, reqtype, jsondata={} ):
 settings = readsettings ( settingsfile ) #Read settings to JSON object
 
 # Start all nodes in GNS3 project
-s   = settings['gns3']
-url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']+"/"+s['project']+"/"+s['nodesstarturi']
+url = return_url ( settings )
 r = request ( url, "post" )
 
 
