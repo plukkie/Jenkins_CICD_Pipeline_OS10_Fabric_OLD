@@ -1,0 +1,11 @@
+{
+	"gns3" : {
+		"project"	: "383b63b2-094a-43e1-b3e6-ff0ae7c8d854",
+		"serverip"	: "10.204.11.142",
+		"serverport"	: "80",
+		"projecturi"	: "v2/projects",
+		"nodesstarturi"	: "nodes/start",
+		"nodesstopuri"	: "nodes/stop",
+		"prot"		: "http://"
+	}
+}
