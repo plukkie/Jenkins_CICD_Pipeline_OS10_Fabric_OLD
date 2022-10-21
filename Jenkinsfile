@@ -3,7 +3,7 @@ pipeline {
   stages {
 	stage('Build') {
 		steps {
-			sh 'pip install --user .'
+			sh 'pip3 install -r pyrequirements.txt'
 			sh 'python3 -m py_compile rungns3.py'
 			stash(name: 'compiled-results', includes: '*.py*')
 		}
