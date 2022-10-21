@@ -2,13 +2,9 @@ pipeline {
   agent none
   stages {
 	stage('Build') {
-		agent {
-			docker {
-				image 'python'
-			}
-		}
 		steps {
-			sh 'python -m py_compile rungns3.py'
+			pip install --user .
+			sh 'python3 -m py_compile rungns3.py'
 			stash(name: 'compiled-results', includes: '*.py*')
 		}
 	}
