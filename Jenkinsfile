@@ -3,7 +3,8 @@ pipeline {
   stages {
 	stage('Build') {
 		steps {
-			sh 'pip install -r pyrequirements.txt'
+			sh 'python3 -m pip install json'
+			sh 'sudo pip install -r pyrequirements.txt'
 			sh 'python3 -m py_compile rungns3.py'
 			stash(name: 'compiled-results', includes: '*.py*')
 		}
