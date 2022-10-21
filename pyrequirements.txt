@@ -1,4 +1,2 @@
-json
 requests
-sys
 
