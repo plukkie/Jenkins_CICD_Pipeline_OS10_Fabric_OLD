@@ -11,9 +11,19 @@ settingsfile    = 'settings.json'
 ## Functions
 
 def return_url ( settingsobject ):
+    
+    """
+    input:
+    - settingsobject : JSOn object
 
+    returns constructed url & httheaders if required
+
+    This function reads cli arguments and reads corresponding settings from json file.
+    It constructs the url for the API call & the required http headers.
+    """
     a = sys.argv
     url = ""
+    httpheaders = {}
 
     if 'startgns3' in a[1:] or 'stopgns3' in a[1:]:
         toplevelkey = 'gns3'
@@ -24,7 +34,7 @@ def return_url ( settingsobject ):
     elif 'launchawx' in a[1:]:
         toplevelkey = 'awx'
         s = settingsobject[toplevelkey]
-        url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']+"/"+s['jobtemplateid']+"/"+s['launchsuffix']
+        url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']+"/"+s['jobtemplateid']+"/"+s['launchsuffix']+"/"
     
     else: #No cli arguments given
         print('\nusage : ' + sys.argv[0] + ' <option>\n')
@@ -34,31 +44,20 @@ def return_url ( settingsobject ):
         print('=========================================================')
         sys.exit()
 
-    return url
+    if 'httpheaders' in s: httpheaders = s['httpheaders']
 
-"""
-    s = settingsobject[toplevelkey]
-    a = sys.argv
-    url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']
+    return url, httpheaders
 
-    if 'startgns3' in a[1:]:
-        url = url+"/"+s['project']+"/"+s['nodesstarturi']
-    elif 'stopgns3' in a[1:]:
-        url = url+"/"+s['project']+"/"+s['nodesstopuri']
-    elif 'launchawx' in a[1:]:
-        return url
-    else:
-        print('\nusage : ' + sys.argv[0] + ' <option>\n')
-        print(' - startgns3 : will start GNS3 project')
-        print(' - stopgns3  : will stop GNS3 project')
-        print(' - launchawx : will start job template on Ansible tower')
-        print('=========================================================')
-        sys.exit()
-        
-    return url
-"""
 
 def readsettings ( jsonfile ):
+
+    """
+    input
+    - jsonfile : json file with all settings
+
+    return
+    - json object with all settings
+    """
 
     try:
         f       = open(jsonfile)
@@ -76,19 +75,30 @@ def readsettings ( jsonfile ):
 
 def request ( url, reqtype, jsondata={} ):
     
-    gns3items   = settings['gns3']
-    if reqtype == 'post': r = requests.post (url, data = jsondata )
+    """
+    input
+    - url : array object with url and headers
+    
+    return
+    - http request result
+
+    This function requests an api call to the url endpoint.
+    """
+    
+    if reqtype == 'post': r = requests.post (url[0], headers=url[1], data=jsondata )
+
+    return r
+
+
 
 ########################
 ##### MAIN PROGRAM #####
 ########################
 
-
 settings = readsettings ( settingsfile ) #Read settings to JSON object
 
-# Start all nodes in GNS3 project
-url = return_url ( settings )
-#r = request ( url, "post" )
+# Request API call
+urltuple = return_url ( settings ) #Return required URL and headers if needed
+response = request ( urltuple, "post") #Request API POST request
 
-print(url)
 
