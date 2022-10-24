@@ -9,20 +9,54 @@ settingsfile    = 'settings.json'
 
 
 ## Functions
-def return_url ( settingsobject):
-    
-    s = settingsobject['gns3']
+
+def return_url ( settingsobject ):
+
     a = sys.argv
-    if 'start' in a[1:]:
-        gns3call = 'nodesstarturi'
-    elif 'stop' in a[1:]:
-        gns3call = 'nodesstopuri'
+    url = ""
+
+    if 'startgns3' in a[1:] or 'stopgns3' in a[1:]:
+        toplevelkey = 'gns3'
+        s = settingsobject[toplevelkey]
+        url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']+"/"+s['project']
+        if 'startgns3' in a[1:]: url = url+"/"+s['nodesstarturi']
+        if 'stopgns3' in a[1:]: url = url+"/"+s['nodesstopuri']
+    elif 'launchawx' in a[1:]:
+        toplevelkey = 'awx'
+        s = settingsobject[toplevelkey]
+        url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']+"/"+s['jobtemplateid']+"/"+s['launchsuffix']
+    
+    else: #No cli arguments given
+        print('\nusage : ' + sys.argv[0] + ' <option>\n')
+        print(' - startgns3 : will start GNS3 project')
+        print(' - stopgns3  : will stop GNS3 project')
+        print(' - launchawx : will start job template on Ansible tower')
+        print('=========================================================')
+        sys.exit()
+
+    return url
+
+"""
+    s = settingsobject[toplevelkey]
+    a = sys.argv
+    url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']
+
+    if 'startgns3' in a[1:]:
+        url = url+"/"+s['project']+"/"+s['nodesstarturi']
+    elif 'stopgns3' in a[1:]:
+        url = url+"/"+s['project']+"/"+s['nodesstopuri']
+    elif 'launchawx' in a[1:]:
+        return url
     else:
-        print('please provide GNS3 api call type "start/stop"\n')
+        print('\nusage : ' + sys.argv[0] + ' <option>\n')
+        print(' - startgns3 : will start GNS3 project')
+        print(' - stopgns3  : will stop GNS3 project')
+        print(' - launchawx : will start job template on Ansible tower')
+        print('=========================================================')
         sys.exit()
         
-    url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']+"/"+s['project']+"/"+s[gns3call]
     return url
+"""
 
 def readsettings ( jsonfile ):
 
@@ -54,6 +88,7 @@ settings = readsettings ( settingsfile ) #Read settings to JSON object
 
 # Start all nodes in GNS3 project
 url = return_url ( settings )
-r = request ( url, "post" )
+#r = request ( url, "post" )
 
+print(url)
 

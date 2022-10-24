@@ -1,5 +1,5 @@
 {
-	"gns3" : {
+	"gns3"	: {
 		"project"	: "383b63b2-094a-43e1-b3e6-ff0ae7c8d854",
 		"serverip"	: "10.204.11.142",
 		"serverport"	: "80",
@@ -7,5 +7,14 @@
 		"nodesstarturi"	: "nodes/start",
 		"nodesstopuri"	: "nodes/stop",
 		"prot"		: "http://"
+	},
+	"awx"	: {
+		"serverip"	: "10.204.11.144",
+		"serverport"	: "30080",
+		"projecturi"	: "api/v2/job_templates",
+		"jobtemplateid"	: "40",
+		"launchsuffix"	: "launch",
+		"prot"		: "http://"
+
 	}
 }
