@@ -4,7 +4,7 @@ pipeline {
 	stage('Build') {
 		steps {
 			sh 'pip install -r pyrequirements.txt'
-			sh 'python3 -m py_compile rungns3.py'
+			sh 'python3 -m py_compile startcicd.py'
 			stash(name: 'compiled-results', includes: '*.py*')
 		}
 	}
@@ -17,8 +17,13 @@ pipeline {
 
     	stage('start gns3') {
       		steps {
-        		sh 'python3 rungns3.py start'
+        		sh 'python3 startcicd.py startgns3'
+			sleep(time: 180)
       		}
+	stage('start awx jobtemplate') {
+		steps {
+			sh 'python3 startcicd.py launchawx'
+		}
     	}
   }
 }
