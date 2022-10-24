@@ -20,6 +20,8 @@ pipeline {
         		sh 'python3 startcicd.py startgns3'
 			sleep(time: 180)
       		}
+	}
+
 	stage('start awx jobtemplate') {
 		steps {
 			sh 'python3 startcicd.py launchawx'
