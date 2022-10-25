@@ -3,7 +3,6 @@
 import json
 import requests
 import sys
-from pprint import pprint as pp
 
 
 settingsfile    = 'settings.json'
@@ -102,4 +101,4 @@ settings = readsettings ( settingsfile ) #Read settings to JSON object
 urltuple = return_url ( settings ) #Return required URL and headers if needed
 response = request ( urltuple, "post") #Request API POST request
 
-pp(response)
+print(response)
