@@ -25,13 +25,13 @@ def return_url ( settingsobject ):
     url = ""
     httpheaders = {}
 
-    if 'startgns3' in a[1:] or 'stopgns3' in a[1:]:
+    if 'startgns3' in a[1:] or 'stopgns3' in a[1:]: #It is a call to a GNS3 project
         toplevelkey = 'gns3'
         s = settingsobject[toplevelkey]
         url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']+"/"+s['project']
         if 'startgns3' in a[1:]: url = url+"/"+s['nodesstarturi']
         if 'stopgns3' in a[1:]: url = url+"/"+s['nodesstopuri']
-    elif 'launchawx' in a[1:]:
+    elif 'launchawx' in a[1:]: #It is a call to Ansible Tower
         toplevelkey = 'awx'
         s = settingsobject[toplevelkey]
         url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']+"/"+s['jobtemplateid']+"/"+s['launchsuffix']+"/"
@@ -101,4 +101,4 @@ settings = readsettings ( settingsfile ) #Read settings to JSON object
 urltuple = return_url ( settings ) #Return required URL and headers if needed
 response = request ( urltuple, "post") #Request API POST request
 
-
+print(response)
