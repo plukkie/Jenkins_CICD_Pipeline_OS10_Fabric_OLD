@@ -3,6 +3,7 @@
 import json
 import requests
 import sys
+from pprint import pprint as pp
 
 
 settingsfile    = 'settings.json'
@@ -87,7 +88,7 @@ def request ( url, reqtype, jsondata={} ):
     
     if reqtype == 'post': r = requests.post (url[0], headers=url[1], data=jsondata )
 
-    return r
+    return r.json()
 
 
 
@@ -101,4 +102,4 @@ settings = readsettings ( settingsfile ) #Read settings to JSON object
 urltuple = return_url ( settings ) #Return required URL and headers if needed
 response = request ( urltuple, "post") #Request API POST request
 
-print(response)
+pp(response)
