@@ -87,7 +87,7 @@ def request ( url, reqtype, jsondata={} ):
     
     if reqtype == 'post': r = requests.post (url[0], headers=url[1], data=jsondata )
 
-    return r.json()
+    return r
 
 
 
