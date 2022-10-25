@@ -85,14 +85,34 @@ def request ( url, reqtype, jsondata={} ):
     This function requests an api call to the url endpoint.
     """
     
-    if reqtype == 'post': r = requests.post (url[0], headers=url[1], data=jsondata )
-    obj = json.loads(r.content.decode('utf-8')) #from bytes to dict
+    if reqtype == 'post': r = requests.post ( url[0], headers=url[1], data=jsondata )
+    elif reqtype == 'get': r = requests.get ( url[0], headers=url[1] )
+    obj = r.content.decode('utf-8') #from bytes to dict
 
     return obj
 
 
-def finishchecker ( jsonobject):
-    print(jsonobject)
+def finishchecker ( dataobject ):
+    
+    if type(dataobject) == str: dataobject = json.loads(dataobject) #From str to json
+    
+    urisuffix = dataobject['url'] #Catch the job url that was created
+    s = settings['awx']
+    url = s['prot']+s['serverip']+":"+s['serverport']+urisuffix #create uri for API call to awx to check job status
+    myurltuple = ( url, urltuple[1] ) #Create urltuple with url and headers
+    response = request ( myurltuple, "get" ) #Request API call
+    if type(response) == str: response = json.loads(response) #From str to json
+    
+    result = { 
+                "jobstatus"   : response['status'],
+                "jobfailed"   : response['failed'],
+                "jobfinished" : response['finished']
+             }
+
+    print(result)
+    #return url
+
+    
 
 
 ########################
@@ -102,12 +122,7 @@ def finishchecker ( jsonobject):
 settings = readsettings ( settingsfile ) #Read settings to JSON object
 
 # Request API call
-urltuple = return_url ( settings ) #Return required URL and headers if needed
+urltuple = return_url ( settings ) #Return required URL, headers if needed & other option data
 response = request ( urltuple, "post") #Request API POST request
 
-
-if 'awx' in urltuple[2]['runtype']: finishchecker( response['url'] )
-
-
-#print(response)
-#print(urltuple)
+if 'awx' in urltuple[2]['runtype']: checkresult = finishchecker( response )
