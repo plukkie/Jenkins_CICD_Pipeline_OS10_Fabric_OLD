@@ -46,7 +46,7 @@ def return_url ( settingsobject ):
 
     if 'httpheaders' in s: httpheaders = s['httpheaders']
 
-    return url, httpheaders
+    return url, httpheaders, { "runtype" : toplevelkey }
 
 
 def readsettings ( jsonfile ):
@@ -86,9 +86,13 @@ def request ( url, reqtype, jsondata={} ):
     """
     
     if reqtype == 'post': r = requests.post (url[0], headers=url[1], data=jsondata )
+    obj = json.loads(r.content.decode('utf-8')) #from bytes to dict
 
-    return r
+    return obj
 
+
+def finishchecker ( jsonobject):
+    print(jsonobject)
 
 
 ########################
@@ -101,4 +105,9 @@ settings = readsettings ( settingsfile ) #Read settings to JSON object
 urltuple = return_url ( settings ) #Return required URL and headers if needed
 response = request ( urltuple, "post") #Request API POST request
 
-print(response)
+
+if 'awx' in urltuple[2]['runtype']: finishchecker( response['url'] )
+
+
+#print(response)
+#print(urltuple)
