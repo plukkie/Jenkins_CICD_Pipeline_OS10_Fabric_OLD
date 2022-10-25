@@ -3,6 +3,7 @@
 import json
 import requests
 import sys
+import time
 
 
 settingsfile    = 'settings.json'
@@ -109,8 +110,7 @@ def finishchecker ( dataobject ):
                 "jobfinished" : response['finished']
              }
 
-    print(result)
-    #return url
+    return result #returns the status of the job that was started
 
     
 
@@ -125,4 +125,24 @@ settings = readsettings ( settingsfile ) #Read settings to JSON object
 urltuple = return_url ( settings ) #Return required URL, headers if needed & other option data
 response = request ( urltuple, "post") #Request API POST request
 
-if 'awx' in urltuple[2]['runtype']: checkresult = finishchecker( response )
+if 'awx' in urltuple[2]['runtype']:
+    
+    status   = ''
+    failed   = ''
+    finished = ''
+
+    while True: #Job still running
+        
+        jobresult = finishchecker( response )
+        status   = jobresult['jobstatus']
+        failed   = jobresult['jobfailed']
+        finished = jobresult['jobfinished']
+        print('Job status : ' + status)
+        if status == 'succesfull' or status == 'failed': break
+        time.sleep(10)
+
+    print('Job finished')
+
+
+
+
