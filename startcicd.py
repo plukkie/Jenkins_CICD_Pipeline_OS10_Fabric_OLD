@@ -86,29 +86,51 @@ def request ( url, reqtype, jsondata={} ):
     This function requests an api call to the url endpoint.
     """
     
-    if reqtype == 'post': r = requests.post ( url[0], headers=url[1], data=jsondata )
+    if reqtype == 'post':
+        #print(url)
+        #print(url[0])
+        #print(url[1])
+        r = requests.post ( url[0], headers=url[1], data=jsondata )
     elif reqtype == 'get': r = requests.get ( url[0], headers=url[1] )
     obj = r.content.decode('utf-8') #from bytes to dict
-
+    #print(obj)
+    
     return obj
 
 
-def finishchecker ( dataobject ):
+def jobstatuschecker ( dataobject ):
+    
+    status   = ''
+    failed   = ''
+    finished = ''
     
     if type(dataobject) == str: dataobject = json.loads(dataobject) #From str to json
-    
+ 
     urisuffix = dataobject['url'] #Catch the job url that was created
     s = settings['awx']
     url = s['prot']+s['serverip']+":"+s['serverport']+urisuffix #create uri for API call to awx to check job status
     myurltuple = ( url, urltuple[1] ) #Create urltuple with url and headers
-    response = request ( myurltuple, "get" ) #Request API call
-    if type(response) == str: response = json.loads(response) #From str to json
     
-    result = { 
-                "jobstatus"   : response['status'],
-                "jobfailed"   : response['failed'],
-                "jobfinished" : response['finished']
-             }
+    while True:
+    
+        response = request ( myurltuple, "get" ) #Request API call
+        if type(response) == str: response = json.loads(response) #From str to json
+    
+        result = { 
+                   "jobstatus"   : response['status'],
+                   "jobfailed"   : response['failed'],
+                   "jobfinished" : response['finished']
+                 }
+
+        status   = result['jobstatus']
+        failed   = result['jobfailed']
+        finished = result['jobfinished']
+    
+        print('Job status : ' + status)
+        if status == 'succesfull' or status == 'failed': break
+        time.sleep(10)
+    
+    print('Job finished')
 
     return result #returns the status of the job that was started
 
@@ -124,25 +146,9 @@ settings = readsettings ( settingsfile ) #Read settings to JSON object
 # Request API call
 urltuple = return_url ( settings ) #Return required URL, headers if needed & other option data
 response = request ( urltuple, "post") #Request API POST request
-
-if 'awx' in urltuple[2]['runtype']:
-    
-    status   = ''
-    failed   = ''
-    finished = ''
-
-    while True: #Job still running
-        
-        jobresult = finishchecker( response )
-        status   = jobresult['jobstatus']
-        failed   = jobresult['jobfailed']
-        finished = jobresult['jobfinished']
-        print('Job status : ' + status)
-        if status == 'succesfull' or status == 'failed': break
-        time.sleep(10)
-
-    print('Job finished')
-
+#print(response)
+#If AWX project was launched, check its jobstatus till finished
+if 'awx' in urltuple[2]['runtype']: jobstatuschecker ( response ) 
 
 
 

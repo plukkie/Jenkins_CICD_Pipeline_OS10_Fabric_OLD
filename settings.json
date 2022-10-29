@@ -12,9 +12,9 @@
 		"serverip"	: "10.204.11.144",
 		"serverport"	: "30080",
 		"projecturi"	: "api/v2/job_templates",
-		"jobtemplateid"	: "40",
+		"jobtemplateid"	: "13",
 		"launchsuffix"	: "launch",
-		"httpheaders"	: { "Authorization" : "Bearer kjTo2ur0AqAhyKQ6Y0Of9yuJ0RWmlT" },
+		"httpheaders"	: { "Authorization" : "Bearer Ey8BiQpWEhYD6X5UHWuWk6tACAIdbP" },
 		"prot"		: "http://"
 
 	}
