@@ -24,7 +24,7 @@ pipeline {
 
 	stage('start awx jobtemplate') {
 		steps {
-			result = sh(script: 'python3 -u startcicd.py launchawx',returnStdout: true)
+			result = sh('python3 -u startcicd.py launchawx',returnStdout: true)
 			echo "result = ${env.result}"
 		}
     	}
