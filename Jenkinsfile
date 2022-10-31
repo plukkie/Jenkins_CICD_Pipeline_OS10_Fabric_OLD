@@ -30,8 +30,6 @@ pipeline {
             
 		steps {
                 	echo "${env.LS}" | grep "proceed"
-			proceed = sh "echo ${env.LS}|grep 'proceed'|awk -F'=' '{print $1}'"
-			echo env.proceed
 			script {
 				if (proceed in env.LS) {
             				sh "echo 'start connectivity tests'"
