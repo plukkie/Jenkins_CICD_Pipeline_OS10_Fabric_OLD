@@ -24,7 +24,7 @@ pipeline {
 
 	stage("Configure GNS3") {
 		environment {
-			LS = "${sh(script:'python3 -u startcicd.py launchawx | grep proceed')}, returnStdout: true).trim()}"
+			LS = "${sh(script:'python3 -u startcicd.py launchawx | grep "proceed"', returnStdout: true).trim()}"
     		}
             
 		steps {
