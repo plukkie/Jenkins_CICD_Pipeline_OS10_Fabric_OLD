@@ -189,6 +189,6 @@ response = request ( urltuple, "post") #Request API POST request
 #If AWX project was launched, check its jobstatus till finished
 if 'awx' in urltuple[2]['runtype']:
     checkresult = jobstatuschecker ( response )
-    print('proceed = ' + checkresult)
+    print('proceed =', checkresult)
 
 
