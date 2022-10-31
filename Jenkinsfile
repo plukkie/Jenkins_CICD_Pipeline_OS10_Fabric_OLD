@@ -24,7 +24,7 @@ pipeline {
 
 	stage("Env Variables") {
 		environment {
-        		LS = "${sh(script:'python3 startcicd.py launchawx', returnStdout: true).trim()}"
+        		LS = "${sh(script:'python3 -u startcicd.py launchawx', returnStdout: true).trim()}"
     		}
             
 		steps {
