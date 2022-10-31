@@ -22,15 +22,18 @@ pipeline {
       		}
 	}
 
-	stage('start awx jobtemplate') {
-		environment {
-                	result = ""
-            	}
-		steps {
-			result = sh('python3 -u startcicd.py launchawx',returnStdout: true)
-			echo "result = ${env.result}"
-		}
-    	}
+	stage("Env Variables") {
+            steps {
+                script {
+                    env.LS = sh(script:'python3 -u startcicd.py launchawx', returnStdout: true).trim()
+                    echo "LS = ${env.LS}"
+                    // or if you access env variable in the shell command
+                    sh 'echo $LS'
+                }
+            }
+        }
+	  
+	
   }
 }
 
