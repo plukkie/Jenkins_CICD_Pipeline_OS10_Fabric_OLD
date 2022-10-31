@@ -115,7 +115,7 @@ def jobstatuschecker ( dataobject ):
    
     # start Loop, get every 10 seconds jobstatus
     #
-    # - jobstatus   (can be pending, running, failed)
+    # - jobstatus   (can be pending, running, successful, failed)
     # - jobfailed   (can be false, true)
     # - jobfinished (can be null or time, i.e 2022-10-24T14:38:50.009531Z)
 
@@ -136,7 +136,7 @@ def jobstatuschecker ( dataobject ):
         failed   = result['jobfailed']
         finished = result['jobfinished']
     
-        if status == 'succesful':
+        if status == 'successful':
             if failed == 'false' or failed == False:
                 print('\n Succesful job finish at ' + finished)
                 proceed = True
