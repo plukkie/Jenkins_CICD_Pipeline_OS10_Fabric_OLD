@@ -31,7 +31,7 @@ pipeline {
                 	
 			script {
 				echo "${env.LS}"
-				sh "exit 0"
+				error "There were failures in the job template execution. Pipeline stops here."
 				if (env.LS == 'proceed = True') {
             				sh "echo 'start connectivity tests'"
         			} else {
