@@ -30,13 +30,14 @@ pipeline {
 		steps {
                 	echo "${env.LS}"
 		
-		script {
-		if (env.LS == 'main') {
-            		echo 'Hello from main branch'
-        	} else {
-            		sh "echo 'else was reached'"
-        	}
-		}
+			script {
+				if (env.LS == 'proceed = True') {
+            				sh "echo 'start connectivity tests'"
+        			} else {
+            				echo 'Failures. Terminating pipeline.'
+					sh 'exit 0'
+        			}
+			}
 		}
         }
 	  
