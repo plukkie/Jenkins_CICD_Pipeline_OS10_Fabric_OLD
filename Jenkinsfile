@@ -35,7 +35,6 @@ pipeline {
             				sh "echo 'start connectivity tests'"
         			} else {
             				echo 'Failures. Terminating pipeline.'
-					sh 'exit 0'
         			}
 			}
 		}
