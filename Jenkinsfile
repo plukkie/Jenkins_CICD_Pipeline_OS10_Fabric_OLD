@@ -31,7 +31,7 @@ pipeline {
                 	
 			script {
 				echo "${env.LS}"
-				if (proceed in env.LS) {
+				if ('True' in env.LS) {
             				sh "echo 'start connectivity tests'"
         			} else {
             				echo 'Failures. Terminating pipeline.'
