@@ -23,14 +23,14 @@ pipeline {
 	}
 
 	stage("Env Variables") {
-            steps {
-                script {
-                    env.LS = sh(script:'python3 -u startcicd.py launchawx', returnStdout: true).trim()
-                    echo "LS = ${env.LS}"
-                    // or if you access env variable in the shell command
-                    sh 'echo $LS'
-                }
-            }
+		environment {
+        		LS = "${sh(script:'python3 -u startcicd.py launchawx', returnStdout: true).trim()}"
+    		}
+            
+		steps {
+                	echo "LS = ${env.LS}"
+            	}
+		
         }
 	  
 	
