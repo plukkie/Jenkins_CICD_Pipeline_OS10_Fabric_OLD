@@ -24,7 +24,7 @@ pipeline {
 
 	stage('start awx jobtemplate') {
 		steps {
-			sh 'python3 startcicd.py launchawx'
+			sh 'python3 -u startcicd.py launchawx'
 		}
     	}
   }
