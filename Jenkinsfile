@@ -25,14 +25,13 @@ pipeline {
 	stage("Configure GNS3") {
 		environment {
         		LS = "${sh(script:'python3 -u startcicd.py launchawx', returnStdout: true).trim()}"
-			proceed = ''
+			proceed = "${sh 'echo 'env.LS' | grep "proceed" | awk -F'=' '{print $1}'}"
     		}
             
 		steps {
                 	echo "${env.LS}"
-			
+			echo env.proceed
 			script {
-				proceed = "${sh 'echo 'env.LS' | grep "proceed" | awk -F'=' '{print $1}'}"
 				if (proceed in env.LS) {
             				sh "echo 'start connectivity tests'"
         			} else {
