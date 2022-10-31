@@ -31,11 +31,10 @@ pipeline {
                 	
 			script {
 				echo "${env.LS}"
-				error "There were failures in the job template execution. Pipeline stops here."
 				if (env.LS == 'proceed = True') {
             				sh "echo 'start connectivity tests'"
         			} else {
-            				echo 'Failures. Terminating pipeline.'
+            				error "There were failures in the job template execution. Pipeline stops here."
         			}
 			}
 		}
