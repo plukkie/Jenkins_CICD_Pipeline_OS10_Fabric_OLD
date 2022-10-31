@@ -1,2 +1,4 @@
-# Jenkins_start_gns3_project
-This tool will start all nodes of a GNS3 project
+# CI/CD pipeline for a datacenter network fabric
+This repo helps you setup a CI/CD pipeline for a datacenter fabric. 
+netwotk changes will be validated to a GNS3 test fabric. 
+If connectivity tests are succesful, the configuration is deployed to the prod fabric.
