@@ -29,9 +29,9 @@ pipeline {
             
 		steps {
                 	echo "${env.LS}"
-		
+			
 			script {
-				if (env.LS in 'proceed = True') {
+				if ('proceed = True' in env.LS) {
             				sh "echo 'start connectivity tests'"
         			} else {
             				echo 'Failures. Terminating pipeline.'
