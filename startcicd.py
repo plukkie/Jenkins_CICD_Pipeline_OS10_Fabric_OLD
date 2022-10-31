@@ -99,7 +99,21 @@ def request ( url, reqtype, jsondata={} ):
 
 
 def jobstatuschecker ( dataobject ):
+
+    """
+    inputs
+    - dataobject : json or string object, i.e. returned from API call
+
+    return
+    - proceed : boolean (True or false)
+
+    This function checks the status of an Ansible Tower Job.
+    The dataobject is the return object of an previous started API call to start
+    a Job Template. The job template starts a job and with the job id
+    the jobstatuschecker will poll the status till finished.
     
+    """
+
     status   = ''
     failed   = ''
     finished = ''
