@@ -29,13 +29,13 @@ pipeline {
             
 		steps {
                 	echo "LS = ${env.LS}"
-
-			if (env.LS == 'main') {
-            			echo 'Hello from main branch'
-        		} else {
-            			sh "echo 'else was reached'"
-        		}
 		}
+		
+		if (env.LS == 'main') {
+            		echo 'Hello from main branch'
+        	} else {
+            		sh "echo 'else was reached'"
+        	}
         }
 	  
 	
