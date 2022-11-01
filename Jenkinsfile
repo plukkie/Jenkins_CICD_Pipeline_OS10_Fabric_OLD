@@ -1,6 +1,12 @@
 pipeline {
   agent any
+	
+  environment {
+	  PROCEED = false
+  }
+  
   stages {
+	  if ( env.PROCEED == false ) { return }
 	stage('Build') {
 		steps {
 			sh 'pip install -r pyrequirements.txt'
