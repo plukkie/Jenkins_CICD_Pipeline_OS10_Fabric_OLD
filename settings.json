@@ -1,6 +1,7 @@
 {
 	"gns3"	: {
-		"project"	: "383b63b2-094a-43e1-b3e6-ff0ae7c8d854",
+		"teststageproject" : "383b63b2-094a-43e1-b3e6-ff0ae7c8d854",
+		"prodstageproject" : "",
 		"serverip"	: "10.204.11.142",
 		"serverport"	: "80",
 		"projecturi"	: "v2/projects",
@@ -11,11 +12,16 @@
 	"awx"	: {
 		"serverip"	: "10.204.11.144",
 		"serverport"	: "30080",
+		"prot"		: "http://",
 		"projecturi"	: "api/v2/job_templates",
 		"jobtemplateid"	: "13",
+		"teststage_jobtemplate_name_test" : "Template Stage TEST OS10 EVPN Fabric fase PINGTESTS",
+		"teststage_jobtemplate_name_deploy" : "Template Stage TEST OS10 EVPN Fabric fase DEPLOY",
+		"prodstage_jobtemplate_name_test" : "Template Stage PROD OS10 EVPN Fabric fase PINGTESTS",
+		"prodstage_jobtemplate_name_deploy" : "Template Stage PROD OS10 EVPN Fabric fase DEPLOY",
 		"launchsuffix"	: "launch",
-		"httpheaders"	: { "Authorization" : "Bearer Ey8BiQpWEhYD6X5UHWuWk6tACAIdbP" },
-		"prot"		: "http://"
-
+		"httpheaders"	: { "Authorization" : "Bearer Ey8BiQpWEhYD6X5UHWuWk6tACAIdbP" }
 	}
 }
+
+

@@ -15,14 +15,14 @@ pipeline {
       		}
     	}
 
-    	stage('start gns3') {
+    	stage('Start GNS33 Test Stage') {
       		steps {
-        		sh 'python3 -u startcicd.py startgns3'
-			sleep(time: 10)
+        		sh 'python3 -u startcicd.py startgns3 teststage'
+			sleep(time: 25)
       		}
 	}
 
-	stage("Configure GNS3") {
+	stage("Configure GNS3 test Stage") {
 		environment {
 			LS = "${sh(script:'python3 -u startcicd.py launchawx | grep "proceed"', returnStdout: true).trim()}"
     		}
@@ -40,7 +40,6 @@ pipeline {
 		}
         }
 	  
-	
   }
 }
 

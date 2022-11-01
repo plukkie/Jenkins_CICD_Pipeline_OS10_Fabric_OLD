@@ -25,29 +25,82 @@ def return_url ( settingsobject ):
     a = sys.argv
     url = ""
     httpheaders = {}
+    jtname = ""
+    jturl = ""
 
     if 'startgns3' in a[1:] or 'stopgns3' in a[1:]: #It is a call to a GNS3 project
         toplevelkey = 'gns3'
         s = settingsobject[toplevelkey]
-        url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']+"/"+s['project']
+        url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']+"/"
+        if 'teststage' in a[2:]:
+            url = url + s['teststageproject']
+        elif 'prodstage' in a[2:]:
+            url = url + s['prodstageproject']
+        else:
+            print('No Stage specified. Please add "teststage" or "prodstage"')
+            sys.exit()
+
         if 'startgns3' in a[1:]: url = url+"/"+s['nodesstarturi']
         if 'stopgns3' in a[1:]: url = url+"/"+s['nodesstopuri']
     elif 'launchawx' in a[1:]: #It is a call to Ansible Tower
         toplevelkey = 'awx'
         s = settingsobject[toplevelkey]
-        url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']+"/"+s['jobtemplateid']+"/"+s['launchsuffix']+"/"
-    
+        if 'httpheaders' in s: httpheaders = s['httpheaders']
+        url = s['prot']+s['serverip']+':'+s['serverport']+'/'+s['projecturi']
+        urltuple = ( url, httpheaders )
+        resp = request ( urltuple, 'get' )
+        if type(resp) == str: jsonobj = json.loads(resp) #From str to json
+        
+        if 'teststage' in a[2:]:
+            if 'deploy' in a[3:]:
+                jtname = s['teststage_jobtemplate_name_deploy']
+            elif 'test' in a[3:]:
+                jtname = s['teststage_jobtemplate_name_test']
+            else:
+                print('No stagefase specified. Please add "deploy" or "test"')
+                sys.exit()
+        elif 'prodstage' in a[2:]:
+            if 'deploy' in a[3:]:
+                jtname = s['prodstage_jobtemplate_name_deploy']
+            elif 'test' in a[3:]:
+                jtname = s['prodstage_jobtemplate_name_test']
+            else:
+                print('No stagefase specified. Please add "deploy" or "test"')
+                sys.exit()
+        else:
+            print('No Stage specified. Please add "teststage" or "prodstage"')
+            sys.exit()
+
+        templates = jsonobj['count']
+        
+        for jt in jsonobj['results']: #search through available jobtemplates and find the one we need
+            #print(jtname)
+            #print(jt['name'])
+            if jtname == jt['name']: #found match
+                print('Found requested Job Template')
+                jturl = jt['url'] #This uri addon is needed to launch the template
+                jtid = jt['id'] #Job template id
+                print('Job Template ID : ' + str(jtid))
+        
+        if jturl == "":
+            print('No matching Job template found on Ansible Tower for "' + jtname + '".')
+            print('Check spelling or the available Job templates on Tower.')
+            sys.exit()
+        
+        url = s['prot']+s['serverip']+':'+s['serverport'] + jturl + s['launchsuffix']+"/"
+
     else: #No cli arguments given
         print('\nusage : ' + sys.argv[0] + ' <option>\n')
         print(' - startgns3 : will start GNS3 project')
         print(' - stopgns3  : will stop GNS3 project')
-        print(' - launchawx : will start job template on Ansible tower')
+        print(' - launchawx teststage: will start job template for test env on Ansible tower')
+        print(' - launchawx prodstage: will start job template for prod env on Ansible tower')
         print('=========================================================')
         sys.exit()
 
-    if 'httpheaders' in s: httpheaders = s['httpheaders']
 
     return url, httpheaders, { "runtype" : toplevelkey }
+
 
 
 def readsettings ( jsonfile ):
@@ -121,7 +174,7 @@ def jobstatuschecker ( dataobject ):
     st       = 10 #Delay between check requests
     
     if type(dataobject) == str: dataobject = json.loads(dataobject) #From str to json
- 
+    print(dataobject) 
     urisuffix = dataobject['url'] #Catch the job url that was created
     s = settings['awx']
     url = s['prot']+s['serverip']+":"+s['serverport']+urisuffix #create uri for API call to awx to check job status
@@ -184,8 +237,10 @@ settings = readsettings ( settingsfile ) #Read settings to JSON object
 
 # Request API call
 urltuple = return_url ( settings ) #Return required URL, headers if needed & other option data
+print(urltuple)
 response = request ( urltuple, "post") #Request API POST request
-#print(response)
+
+print(response)
 #If AWX project was launched, check its jobstatus till finished
 if 'awx' in urltuple[2]['runtype']:
     checkresult = jobstatuschecker ( response )
