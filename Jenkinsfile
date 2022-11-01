@@ -32,14 +32,33 @@ pipeline {
 			script {
 				echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
-            				sh "echo 'start connectivity tests'"
+            				sh "echo 'Proceed to TEST stage fase PINGTESTS'"
         			} else {
             				error "There were failures in the job template execution. Pipeline stops here."
+					sh 'exit 0'
         			}
 			}
 		}
         }
 	  
+	stage("Start connectivity Tests GNS3 on test Stage") {
+		environment {
+			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage test | grep "proceed"', returnStdout: true).trim()}"
+    		}
+            
+		steps {
+                	
+			script {
+				echo "${env.LS}"
+				if (env.LS == 'proceed = True') {
+            				sh "echo 'Proceed to PROD stage fase Deploy'"
+        			} else {
+            				error "There were failures in the job template execution. Pipeline stops here."
+					sh 'exit 0'
+        			}
+			}
+		}
+        }
   }
 }
 
