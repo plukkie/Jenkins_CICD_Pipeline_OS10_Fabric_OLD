@@ -6,9 +6,7 @@ pipeline {
   }
   
   stages {
-	  script {
-	  if ( env.PROCEED == false ) { return }
-	  }
+	 
 	stage('Build') {
 		steps {
 			sh 'pip install -r pyrequirements.txt'
