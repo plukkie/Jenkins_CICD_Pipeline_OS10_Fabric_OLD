@@ -22,9 +22,9 @@ pipeline {
       		}
 	}
 
-	stage("Configure GNS3 test Stage") {
+	stage("Deploy GNS3 test Stage") {
 		environment {
-			LS = "${sh(script:'python3 -u startcicd.py launchawx | grep "proceed"', returnStdout: true).trim()}"
+			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage deploy | grep "proceed"', returnStdout: true).trim()}"
     		}
             
 		steps {
