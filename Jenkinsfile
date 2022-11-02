@@ -24,13 +24,12 @@ pipeline {
       		}
 	}
 
-	stage("Stage: Deploy Test network on GNS3") {
+	stage("Stage Test: Deploy Test network") {
 		environment {
 			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage deploy | grep "proceed"', returnStdout: true).trim()}"
     		}
-                error ("There were failures in the job template execution. Pipeline stops here.")            
+                            
 		steps {
-                	
 			script {
 				echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
@@ -42,7 +41,7 @@ pipeline {
 		}
         }
 	  
-	stage("Start connectivity Tests GNS3 on test Stage") {
+	stage("Stage Test: Start connectivity Tests") {
 		environment {
 			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage test | grep "proceed"', returnStdout: true).trim()}"
     		}
@@ -54,8 +53,7 @@ pipeline {
 				if (env.LS == 'proceed = True') {
             				sh "echo 'Proceed to PROD stage fase Deploy'"
         			} else {
-            				error "There were failures in the job template execution. Pipeline stops here."
-					sh 'exit 0'
+            				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
 			}
 		}
