@@ -17,7 +17,7 @@ pipeline {
       		}
     	}
 
-    	stage('Start GNS33 Stage TEST') {
+    	stage('Start GNS3 Stage TEST') {
       		steps {
         		sh 'python3 -u startcicd.py startgns3 teststage'
 			sleep( time: 30 )
