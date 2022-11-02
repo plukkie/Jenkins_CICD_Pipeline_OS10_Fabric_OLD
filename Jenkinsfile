@@ -50,10 +50,11 @@ pipeline {
             
 		steps {
 			script {
+				echo 'Waiting till network ping tests has finished. This can take some minutes.'
 				echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
 					echo 'SUCCESS. Shutting down Test network'
-					sh 'python3 -u startcicd.py staopgns3 teststage'
+					sh 'python3 -u startcicd.py stopgns3 teststage'
             				echo 'Proceed to Stage PROD fase Deploy'
         			} else {
             				error ("There were failures in the job template execution. Pipeline stops here.")
