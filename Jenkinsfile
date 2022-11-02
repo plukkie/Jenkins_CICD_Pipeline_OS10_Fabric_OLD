@@ -19,6 +19,7 @@ pipeline {
 
     	stage('Start GNS3 Stage TEST') {
       		steps {
+			echo 'Request API call to GNS3 server to start Test fabric.'
         		sh 'python3 -u startcicd.py startgns3 teststage'
 			echo 'Waiting for systems te become active'
 			sleep( time: 120 )
