@@ -14,6 +14,7 @@ pipeline {
     	stage('version') {
       		steps {
         		sh 'python3 --version'
+			error ("EXIT TEST, REMOVE WHEN WORKS")
       		}
     	}
 
