@@ -67,6 +67,16 @@ pipeline {
 			}
 		}
         }
+    	
+	stage('Start GNS3 Stage PROD') {
+      		steps {
+			echo 'Request API call to GNS3 server to start PROD fabric.'
+        		sh 'python3 -u startcicd.py startgns3 prodstage'
+			echo 'Waiting for systems te become active'
+			sleep( time: 120 )
+      		}
+	}
+
   }
 }
 

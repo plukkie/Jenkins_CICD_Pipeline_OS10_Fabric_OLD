@@ -1,7 +1,7 @@
 {
 	"gns3"	: {
 		"teststageproject" : "383b63b2-094a-43e1-b3e6-ff0ae7c8d854",
-		"prodstageproject" : "",
+		"prodstageproject" : "685bcf1d-f92c-4dcf-a973-0455847f4f59",
 		"serverip"	: "10.204.11.142",
 		"serverport"	: "80",
 		"projecturi"	: "v2/projects",
