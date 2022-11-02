@@ -14,18 +14,17 @@ pipeline {
     	stage('version') {
       		steps {
         		sh 'python3 --version'
-			error ("EXIT TEST, REMOVE WHEN WORKS")
       		}
     	}
 
-    	stage('Start GNS33 Test Stage') {
+    	stage('Start GNS33 Stage TEST') {
       		steps {
         		sh 'python3 -u startcicd.py startgns3 teststage'
 			sleep(time: 25)
       		}
 	}
 
-	stage("Stage Test: Deploy Test network") {
+	stage("Stage TEST: Deploy Test network") {
 		environment {
 			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage deploy | grep "proceed"', returnStdout: true).trim()}"
     		}
@@ -34,7 +33,7 @@ pipeline {
 			script {
 				echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
-            				sh "echo 'Proceed to TEST stage fase PINGTESTS'"
+            				sh "echo 'Proceed to Sttage TEST fase Ping Tests'"
         			} else {
             				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
@@ -52,7 +51,7 @@ pipeline {
 			script {
 				echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
-            				sh "echo 'Proceed to PROD stage fase Deploy'"
+            				sh "echo 'Proceed to Stage PROD fase Deploy'"
         			} else {
             				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
