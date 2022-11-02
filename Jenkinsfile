@@ -1,9 +1,5 @@
 pipeline {
   agent any
-	
-  environment {
-	  PROCEED = false
-  }
   
   stages {
 	 
@@ -28,11 +24,11 @@ pipeline {
       		}
 	}
 
-	stage("Deploy GNS3 test Stage") {
+	stage("Stage: Deploy Test network on GNS3") {
 		environment {
 			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage deploy | grep "proceed"', returnStdout: true).trim()}"
     		}
-            
+                error ("There were failures in the job template execution. Pipeline stops here.")            
 		steps {
                 	
 			script {
@@ -40,8 +36,7 @@ pipeline {
 				if (env.LS == 'proceed = True') {
             				sh "echo 'Proceed to TEST stage fase PINGTESTS'"
         			} else {
-            				error "There were failures in the job template execution. Pipeline stops here."
-					sh 'exit 0'
+            				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
 			}
 		}
