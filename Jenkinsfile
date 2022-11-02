@@ -33,7 +33,7 @@ pipeline {
 			script {
 				echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
-            				sh "echo 'Proceed to Sttage TEST fase Ping Tests'"
+            				sh "echo 'Proceed to Stage TEST fase Ping Tests'"
         			} else {
             				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
@@ -41,13 +41,12 @@ pipeline {
 		}
         }
 	  
-	stage("Stage Test: Start connectivity Tests") {
+	stage("Stage TEST: Start connectivity Tests") {
 		environment {
 			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage test | grep "proceed"', returnStdout: true).trim()}"
     		}
             
 		steps {
-                	
 			script {
 				echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
