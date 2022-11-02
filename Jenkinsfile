@@ -51,7 +51,7 @@ pipeline {
             
 		steps {
 			script {
-				echo 'Waiting till network ping tests has finished. This can take some minutes.'
+				echo 'Waiting till network ping tests have finished. This can take some minutes.'
 				echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
 					echo 'All pingtests succeeded.'
@@ -76,6 +76,45 @@ pipeline {
 			sleep( time: 120 )
       		}
 	}
+
+	stage("Stage PROD: Deploy production network") {
+		environment {
+			LS = "${sh(script:'python3 -u startcicd.py launchawx prodstage deploy | grep "proceed"', returnStdout: true).trim()}"
+    		}
+                            
+		steps {
+			script {
+				echo 'Waiting till network deployment has finished. This can take couple of minutes.'
+				echo "${env.LS}"
+				if (env.LS == 'proceed = True') {
+            				echo 'Proceed to Stage PROD fase Ping Tests'
+        			} else {
+            				error ("There were failures in the job template execution. Pipeline stops here.")
+        			}
+			}
+		}
+        }
+
+	stage("Stage PROD: Start connectivity Tests") {
+		environment {
+			LS = "${sh(script:'python3 -u startcicd.py launchawx prodstage test | grep "proceed"', returnStdout: true).trim()}"
+    		}
+            
+		steps {
+			script {
+				echo 'Waiting till network ping tests have finished. This can take some minutes.'
+				echo "${env.LS}"
+				if (env.LS == 'proceed = True') {
+					echo 'All pingtests succeeded.'
+					sleep( time: 2 )
+            				echo 'The production network runs fine with the new changes :-)'
+					sleep( time: 2 )
+        			} else {
+            				error ("There were failures in the job template execution. Pipeline stops here.")
+        			}
+			}
+		}
+        }
 
   }
 }
