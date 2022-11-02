@@ -16,7 +16,7 @@ pipeline {
         		sh 'python3 --version'
       		}
     	}
-
+/*
     	stage('Stop GNS3 Stage PROD') {
       		steps {
 			echo 'Request API call to GNS3 server to stop Prod fabric.'
@@ -24,7 +24,7 @@ pipeline {
 			sleep( time: 3 )
       		}
 	}
-
+*/
     	stage('Start GNS3 Stage TEST') {
       		steps {
 			echo 'Request API call to GNS3 server to start Test fabric.'
