@@ -32,6 +32,7 @@ pipeline {
                             
 		steps {
 			script {
+				echo 'Waiting till network deployment has finished. This can take couple of minutes.'
 				echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
             				echo 'Proceed to Stage TEST fase Ping Tests'
