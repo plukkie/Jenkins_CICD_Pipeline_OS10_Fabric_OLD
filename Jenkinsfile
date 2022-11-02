@@ -17,6 +17,14 @@ pipeline {
       		}
     	}
 
+    	stage('Stop GNS3 Stage PROD') {
+      		steps {
+			echo 'Request API call to GNS3 server to stop Prod fabric.'
+        		sh 'python3 -u startcicd.py stopgns3 prodstage'
+			sleep( time: 3 )
+      		}
+	}
+
     	stage('Start GNS3 Stage TEST') {
       		steps {
 			echo 'Request API call to GNS3 server to start Test fabric.'
