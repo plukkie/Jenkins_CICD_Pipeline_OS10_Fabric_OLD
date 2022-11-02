@@ -34,7 +34,7 @@ pipeline {
 			script {
 				echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
-            				sh "echo 'Proceed to Stage TEST fase Ping Tests'"
+            				echo 'Proceed to Stage TEST fase Ping Tests'
         			} else {
             				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
@@ -51,9 +51,9 @@ pipeline {
 			script {
 				echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
-					sh "echo 'SUCCESS. Shutting down Test network'"
+					echo 'SUCCESS. Shutting down Test network'
 					sh 'python3 -u startcicd.py staopgns3 teststage'
-            				sh "echo 'Proceed to Stage PROD fase Deploy'"
+            				echo 'Proceed to Stage PROD fase Deploy'
         			} else {
             				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
