@@ -15,6 +15,7 @@ pipeline {
       		steps {
 			echo 'Get python3 versions:'
         		sh 'python3 --version'
+			sh 'pip3 list'
       		}
     	}
 /*
