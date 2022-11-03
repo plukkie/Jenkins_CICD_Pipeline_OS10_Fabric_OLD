@@ -40,7 +40,7 @@ pipeline {
 					echo 'Network already provisioned. Proceed to Stage Dev: Configure Dev network'
                                         sleep( time: 2 )
                                 }
-				if (env.LS == '') {
+				else {
 					echo 'Dev network is being provisioned. This can take ~3 mins'
         				//sh 'python3 -u startcicd.py startgns3 teststage'
 					echo 'Waiting for systems te become active'
