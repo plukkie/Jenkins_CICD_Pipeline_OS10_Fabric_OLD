@@ -40,22 +40,8 @@ def return_url ( settingsobject ):
             print('No Stage specified. Please add "teststage" or "prodstage"')
             sys.exit()
 
-        if 'startgns3' in a[1:]:
-            url = url + '/' + s['nodescheck']
-            urltuple = ( url, httpheaders )
-            resp = request ( urltuple, 'get' ) #Check status of all nodes in the project
-            if type(resp) == str: resp = json.loads(resp) #From str to json
-            for item in resp:
-                status = item['status'].lower()
-                if status == 'stopped': #Stopped node, need to start all nodes with API request
-                    url = url+"/"+s['nodesstarturi']
-                    break
-                else:
-                    print('All nodes are already up & running, no need to start')
-                    url = "proceed = True"
-
-        if 'stopgns3' in a[1:]: url = url + "/" + s['nodescheck'] + '/' + s['nodesstopuri']
-
+        if 'startgns3' in a[1:]: url = url+"/"+s['nodesstarturi']
+        if 'stopgns3' in a[1:]: url = url+"/"+s['nodesstopuri']
     elif 'launchawx' in a[1:]: #It is a call to Ansible Tower
         toplevelkey = 'awx'
         s = settingsobject[toplevelkey]
@@ -63,7 +49,7 @@ def return_url ( settingsobject ):
         url = s['prot']+s['serverip']+':'+s['serverport']+'/'+s['projecturi']
         urltuple = ( url, httpheaders )
         resp = request ( urltuple, 'get' )
-        if type(resp) == str: resp = json.loads(resp) #From str to json
+        if type(resp) == str: jsonobj = json.loads(resp) #From str to json
         
         if 'teststage' in a[2:]:
             if 'deploy' in a[3:]:
@@ -85,9 +71,9 @@ def return_url ( settingsobject ):
             print('No Stage specified. Please add "teststage" or "prodstage"')
             sys.exit()
 
-        templates = resp['count']
+        templates = jsonobj['count']
         
-        for jt in resp['results']: #search through available jobtemplates and find the one we need
+        for jt in jsonobj['results']: #search through available jobtemplates and find the one we need
             #print(jtname)
             #print(jt['name'])
             if jtname == jt['name']: #found match
@@ -111,6 +97,7 @@ def return_url ( settingsobject ):
         print(' - launchawx prodstage: will start job template for prod env on Ansible tower')
         print('=========================================================')
         sys.exit()
+
 
     return url, httpheaders, { "runtype" : toplevelkey }
 
@@ -250,11 +237,7 @@ settings = readsettings ( settingsfile ) #Read settings to JSON object
 
 # Request API call
 urltuple = return_url ( settings ) #Return required URL, headers if needed & other option data
-#print(urltuple)
-if urltuple[0] == 'proceed = True': #Report back to proceed & exit
-    print(urltuple[0])
-    sys.exit()
-
+print(urltuple)
 response = request ( urltuple, "post") #Request API POST request
 
 print(response)

@@ -5,8 +5,9 @@
 		"serverip"	: "10.204.11.142",
 		"serverport"	: "80",
 		"projecturi"	: "v2/projects",
-		"nodesstarturi"	: "nodes/start",
-		"nodesstopuri"	: "nodes/stop",
+		"nodescheck"	: "nodes",
+		"nodesstarturi"	: "start",
+		"nodesstopuri"	: "stop",
 		"prot"		: "http://"
 	},
 	"awx"	: {

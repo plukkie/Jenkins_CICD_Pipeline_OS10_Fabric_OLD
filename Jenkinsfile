@@ -28,11 +28,24 @@ pipeline {
 	}
 */
     	stage('Stage Dev: Provision GNS3 Dev network') {
-      		steps {
-			echo 'Request API call to GNS3 server to start Dev fabric.'
-        		sh 'python3 -u startcicd.py startgns3 teststage'
-			echo 'Waiting for systems te become active'
-			sleep( time: 150 )
+		
+		environment {
+			LS = "${sh(script:'python3 -u startcicd.py startgns3 teststage | grep "proceed"', returnStdout: true).trim()}"
+    		}
+      		
+		steps {
+			script {
+				echo "${env.LS}" 
+				if (env.LS == 'proceed = True') {
+					echo 'Network already provisioned. Proceed to Stage Dev: Configure Dev network'
+                                        sleep( time: 2 )
+                                } else {
+					echo 'Request API call to GNS3 server to start Dev fabric.'
+        				sh 'python3 -u startcicd.py startgns3 teststage'
+					echo 'Waiting for systems te become active'
+					sleep( time: 150 )
+                                }
+			}
       		}
 	}
 
