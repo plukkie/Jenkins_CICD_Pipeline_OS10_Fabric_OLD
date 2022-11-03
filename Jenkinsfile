@@ -98,7 +98,8 @@ pipeline {
 				echo 'Waiting till network deployment has finished. This can take ~15 minutes.'
 				echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
-            				echo 'Proceed to Stage PROD fase Ping Tests'
+					sleep( time: 10 )
+            				echo 'Proceed to Stage Pod fase Ping Tests'
         			} else {
             				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
