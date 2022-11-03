@@ -39,7 +39,8 @@ pipeline {
 				if (env.LS == 'proceed = True') {
 					echo 'Network already provisioned. Proceed to Stage Dev: Configure Dev network'
                                         sleep( time: 2 )
-                                } else {
+                                }
+				if (env.LS == '') {
 					echo 'Request API call to GNS3 server to start Dev fabric.'
         				sh 'python3 -u startcicd.py startgns3 teststage'
 					echo 'Waiting for systems te become active'
