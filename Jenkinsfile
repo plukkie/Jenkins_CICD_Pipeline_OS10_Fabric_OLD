@@ -11,8 +11,9 @@ pipeline {
 		}
 	}
 
-    	stage('version') {
+    	stage('Show host versions') {
       		steps {
+			echo 'Get python3 versions:'
         		sh 'python3 --version'
       		}
     	}
@@ -25,26 +26,26 @@ pipeline {
       		}
 	}
 */
-    	stage('Start GNS3 Stage TEST') {
+    	stage('Stage Dev: Provision GNS3 Dev network') {
       		steps {
-			echo 'Request API call to GNS3 server to start Test fabric.'
+			echo 'Request API call to GNS3 server to start Dev fabric.'
         		sh 'python3 -u startcicd.py startgns3 teststage'
 			echo 'Waiting for systems te become active'
-			sleep( time: 120 )
+			sleep( time: 150 )
       		}
 	}
 
-	stage("Stage TEST: Deploy Test network") {
+	stage("Stage Dev: Configure Dev network") {
 		environment {
 			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage deploy | grep "proceed"', returnStdout: true).trim()}"
     		}
                             
 		steps {
 			script {
-				echo 'Waiting till network deployment has finished. This can take couple of minutes.'
+				echo 'Waiting till network configuration has finished. This can take ~15 minutes.'
 				echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
-            				echo 'Proceed to Stage TEST fase Ping Tests'
+            				echo 'Proceed to Stage Dev fase testing...'
         			} else {
             				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
@@ -52,7 +53,7 @@ pipeline {
 		}
         }
 	  
-	stage("Stage TEST: Start connectivity Tests") {
+	stage("Stage Dev: Run connectivity Tests") {
 		environment {
 			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage test | grep "proceed"', returnStdout: true).trim()}"
     		}
@@ -64,11 +65,11 @@ pipeline {
 				if (env.LS == 'proceed = True') {
 					echo 'All pingtests succeeded.'
 					sleep( time: 2 )
-					echo 'Will decommision the Test network.'
+					echo 'Will decommision Dev network to spare GNS3 resources...'
 					sleep( time: 2 )
 					sh 'python3 -u startcicd.py stopgns3 teststage'
-            				echo 'Proceed to Stage PROD fase Deploy'
-					sleep( time: 2 )
+            				echo 'Proceed to Stage Prod fase Provision'
+					sleep( time: 3 )
         			} else {
             				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
@@ -76,23 +77,23 @@ pipeline {
 		}
         }
     	
-	stage('Start GNS3 Stage PROD') {
+	stage('Stage Prod: Provision GNS3 prod network') {
       		steps {
-			echo 'Request API call to GNS3 server to start PROD fabric.'
+			echo 'Request API call to GNS3 server to provision Prod fabric.'
         		sh 'python3 -u startcicd.py startgns3 prodstage'
 			echo 'Waiting for systems te become active'
-			sleep( time: 120 )
+			sleep( time: 150 )
       		}
 	}
 
-	stage("Stage PROD: Deploy production network") {
+	stage("Stage Prod: Configure Prod network") {
 		environment {
 			LS = "${sh(script:'python3 -u startcicd.py launchawx prodstage deploy | grep "proceed"', returnStdout: true).trim()}"
     		}
                             
 		steps {
 			script {
-				echo 'Waiting till network deployment has finished. This can take couple of minutes.'
+				echo 'Waiting till network deployment has finished. This can take ~15 minutes.'
 				echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
             				echo 'Proceed to Stage PROD fase Ping Tests'
@@ -103,7 +104,7 @@ pipeline {
 		}
         }
 
-	stage("Stage PROD: Start connectivity Tests") {
+	stage("Stage Prod: Run connectivity Tests") {
 		environment {
 			LS = "${sh(script:'python3 -u startcicd.py launchawx prodstage test | grep "proceed"', returnStdout: true).trim()}"
     		}
