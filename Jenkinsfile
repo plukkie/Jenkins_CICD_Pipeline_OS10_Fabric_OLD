@@ -41,8 +41,8 @@ pipeline {
                                         sleep( time: 2 )
                                 }
 				if (env.LS == '') {
-					echo 'Request API call to GNS3 server to start Dev fabric.'
-        				sh 'python3 -u startcicd.py startgns3 teststage'
+					echo 'Dev network is being provisioned. This can take ~3 mins'
+        				//sh 'python3 -u startcicd.py startgns3 teststage'
 					echo 'Waiting for systems te become active'
 					sleep( time: 150 )
                                 }
