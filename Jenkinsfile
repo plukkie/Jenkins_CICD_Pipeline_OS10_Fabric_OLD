@@ -44,7 +44,7 @@ pipeline {
 					echo 'Dev network is being provisioned. This can take ~3 mins'
         				//sh 'python3 -u startcicd.py startgns3 teststage'
 					echo 'Waiting for systems te become active'
-					sleep( time: 150 )
+					sleep( time: 180 )
                                 }
 			}
       		}
@@ -98,7 +98,7 @@ pipeline {
 			echo 'Request API call to GNS3 server to provision Prod fabric.'
         		sh 'python3 -u startcicd.py startgns3 prodstage'
 			echo 'Waiting for systems te become active'
-			sleep( time: 150 )
+			sleep( time: 180 )
       		}
 	}
 
