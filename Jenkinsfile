@@ -131,7 +131,8 @@ pipeline {
 				if (env.LS == 'proceed = True') { //100% oke
 					sleep( time: 10 )
             				echo 'Proceed to Stage Prod fase Ping Tests'
-				else if (env.LS == 'proceed = Retry') {
+				}
+				if (env.LS == 'proceed = Retry') {
 					echo 'There are failures in ansible playbook run. Retrying once...'
 					sleep( time: 2 )
 					LS = "${sh(script:'python3 -u startcicd.py launchawx prodstage deploy | grep "proceed"', returnStdout: true).trim()}"
