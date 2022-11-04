@@ -47,8 +47,7 @@ pipeline {
 					echo 'Waiting for systems te become active'
 					sleep( time: 180 )
                                 }
-				String a = "Hello World"
-				println(a.indexOf('e'));
+				
 			}
       		}
 	}
@@ -67,6 +66,7 @@ pipeline {
 					sleep( time: 10 )
             				echo 'Proceed to Stage Dev fase Ping Tests'
 				}
+				println(env.LS.indexOf('relaunch'));
 				if (env.LS == 'proceed = Retry') {
 					echo 'There are failures in ansible playbook run. Retrying once...'
 					sleep( time: 2 )
