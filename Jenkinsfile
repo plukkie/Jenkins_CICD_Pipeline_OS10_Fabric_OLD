@@ -63,7 +63,7 @@ pipeline {
 				echo "${env.LS}"
 				if (env.LS == 'proceed = True') { //100% oke
 					sleep( time: 10 )
-            				echo 'Proceed to Stage Prod fase Ping Tests'
+            				echo 'Proceed to Stage Dev fase Ping Tests'
 				}
 				if (env.LS == 'proceed = Retry') {
 					echo 'There are failures in ansible playbook run. Retrying once...'
@@ -75,7 +75,8 @@ pipeline {
 					} else {
 						error ("There are concurrent failures in the job template execution. Pipeline stops here.")
 					}
-        			} else {
+        			}
+				if (env.LS == 'proceed = False') {
             				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
 			}
@@ -154,7 +155,8 @@ pipeline {
 					} else {
 						error ("There are concurrent failures in the job template execution. Pipeline stops here.")
 					}
-        			} else {
+        			}
+				if (env.LS == 'proceed = False') {
             				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
 			}
