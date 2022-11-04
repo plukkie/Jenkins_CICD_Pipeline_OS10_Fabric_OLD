@@ -71,11 +71,6 @@ def return_url ( settingsobject ):
             resp = request ( urltuple, 'get' )
             if type(resp) == str: resp = json.loads(resp) #From str to json
         
-            if jturl == "":
-                print('No matching Job template found on Ansible Tower for "' + jtname + '".')
-                print('Check spelling or the available Job templates on Tower.')
-                sys.exit()
-        
             if 'teststage' in a[2:]:
                 if 'deploy' in a[3:]:
                     jtname = s['teststage_jobtemplate_name_deploy']
@@ -108,6 +103,11 @@ def return_url ( settingsobject ):
                     jturl = jt['url'] #This uri addon is needed to launch the template
                     jtid = jt['id'] #Job template id
                     print('Job Template ID : ' + str(jtid))
+            
+            if jturl == "":
+                print('No matching Job template found on Ansible Tower for "' + jtname + '".')
+                print('Check spelling or the available Job templates on Tower.')
+                sys.exit()
         
             url = s['prot']+s['serverip']+':'+s['serverport'] + jturl + s['launchsuffix']+"/"
 
