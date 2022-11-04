@@ -163,8 +163,11 @@ def request ( url, reqtype, jsondata={} ):
 
     This function requests an api call to the url endpoint.
     """
-    if url[3] != '{}': #there is json data added to url
-        jsondata = url[3]
+    try:
+        if url[3] != '{}': #there is json data added to url
+            jsondata = url[3]
+    except:
+        pass
 
     if reqtype == 'post':
         #print(url)
