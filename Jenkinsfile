@@ -68,7 +68,7 @@ pipeline {
 				if (env.LS.indexOf('relaunch') != -1) { //a relaunch was proposed, there were failures
 					echo 'There are failures in ansible playbook run. Retrying once...'
 					sleep( time: 2 )
-					LS = "${sh(script:'python3 -u startcicd.py launchawx relaunch '$env.LS'| grep "proceed"', returnStdout: true).trim()}"
+					LS = "${sh(script:'python3 -u startcicd.py launchawx relaunch ${env.LS}| grep "proceed"', returnStdout: true).trim()}"
 					if (env.LS == 'proceed = True') { //100% oke
 						sleep( time: 5 )
             					echo 'Proceed to Stage Dev fase Ping Tests'
