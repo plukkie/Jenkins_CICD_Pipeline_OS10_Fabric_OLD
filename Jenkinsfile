@@ -48,7 +48,7 @@ pipeline {
 					sleep( time: 180 )
                                 }
 				//For testing
-				println(env.LS.indexOf('proceed'));
+				println(env.LS.indexOf('='));
 				
 			}
       		}
