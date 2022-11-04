@@ -18,7 +18,7 @@ pipeline {
 			sh 'pip3 list'
       		}
     	}
-/*
+	//This stage is to spare on resources in the Compute platform (Dev & Prod run together gives problems) 
     	stage('Stop GNS3 Stage PROD') {
       		steps {
 			echo 'Request API call to GNS3 server to stop Prod fabric.'
@@ -26,7 +26,7 @@ pipeline {
 			sleep( time: 3 )
       		}
 	}
-*/
+
     	stage('Stage Dev: Provision GNS3 Dev network') {
 		
 		environment {
@@ -95,7 +95,7 @@ pipeline {
 				if (env.LS == 'proceed = True') {
 					echo 'All pingtests succeeded.'
 					sleep( time: 2 )
-					
+					//This step is to spare on resources in the Compute platform (Dev & Prod run together gives problems) 
 					echo 'Will decommision Dev network to spare GNS3 resources...'
 					sleep( time: 2 )
 					sh 'python3 -u startcicd.py stopgns3 teststage'
