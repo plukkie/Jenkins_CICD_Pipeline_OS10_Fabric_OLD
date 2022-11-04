@@ -62,7 +62,7 @@ def return_url ( settingsobject ):
         if 'httpheaders' in s: httpheaders = s['httpheaders']
 
         if 'relaunch' in a[2:]:
-            relaunchsuffix = a[3:]
+            relaunchsuffix = str(a[3])
             url = s['prot']+s['serverip']+':'+s['serverport'] + relaunchsuffix
 
         else:
@@ -120,7 +120,11 @@ def return_url ( settingsobject ):
         print('=========================================================')
         sys.exit()
 
-    return url, httpheaders, { "runtype" : toplevelkey }
+    if 'relaunch' in url: 
+        return url, httpheaders, { "runtype" : toplevelkey }, { "hosts" : "failed" }
+    else:
+        return url, httpheaders, { "runtype" : toplevelkey }, {}
+
 
 
 
@@ -159,13 +163,15 @@ def request ( url, reqtype, jsondata={} ):
 
     This function requests an api call to the url endpoint.
     """
-    
+    if url[3] != '{}': #there is json data added to url
+        jsondata = url[3]
+
     if reqtype == 'post':
         #print(url)
         #print(url[0])
         #print(url[1])
-        r = requests.post ( url[0], headers=url[1], data=jsondata )
-    elif reqtype == 'get': r = requests.get ( url[0], headers=url[1] )
+        r = requests.post ( url[0], headers=url[1], json=jsondata )
+    elif reqtype == 'get': r = requests.get ( url[0], headers=url[1], json=jsondata )
     obj = r.content.decode('utf-8') #from bytes to dict
     #print(obj)
     
@@ -263,14 +269,15 @@ settings = readsettings ( settingsfile ) #Read settings to JSON object
 
 # Request API call
 urltuple = return_url ( settings ) #Return required URL, headers if needed & other option data
-#print(urltuple)
+print(urltuple)
+
 if urltuple[0] == 'proceed = True': #GNS3 is already running, Report back to proceed & exit
     print(urltuple[0])
     sys.exit()
 
 response = request ( urltuple, "post") #Request API POST request
-#print(response)
-
+print(response)
+sys.exit()
 if 'gns' in urltuple[2]['runtype'] and 'start' in urltuple[0]:
     print('proceed = Wait')
 
