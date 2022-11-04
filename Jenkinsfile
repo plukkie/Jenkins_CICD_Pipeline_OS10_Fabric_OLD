@@ -60,7 +60,7 @@ pipeline {
 			script {
 				echo 'Waiting till network configuration has finished. This can take ~15 minutes.'
 				echo "${env.LS}"
-				if (env.LS == 'proceed = "True"') {
+				if (env.LS == 'proceed = True') {
 					sleep( time: 10 )
             				echo 'Proceed to Stage Dev fase testing...'
         			} else {
@@ -79,7 +79,7 @@ pipeline {
 			script {
 				echo 'Waiting till network ping tests have finished. This can take some minutes.'
 				echo "${env.LS}"
-				if (env.LS == 'proceed = "True"') {
+				if (env.LS == 'proceed = True') {
 					echo 'All pingtests succeeded.'
 					sleep( time: 2 )
 					/*
@@ -105,7 +105,7 @@ pipeline {
 		steps {
 			script {
 				echo "${env.LS}" 
-				if (env.LS == 'proceed = "True"') {
+				if (env.LS == 'proceed = True') {
 					echo 'Network already provisioned. Proceed to Stage Prod: Configure Prod network'
                                         sleep( time: 2 )
                                 }
@@ -128,7 +128,7 @@ pipeline {
 			script {
 				echo 'Waiting till network deployment has finished. This can take ~15 minutes.'
 				echo "${env.LS}"
-				if (env.LS == 'proceed = "True"') {
+				if (env.LS == 'proceed = True') {
 					sleep( time: 10 )
             				echo 'Proceed to Stage Pod fase Ping Tests'
         			} else {
@@ -147,7 +147,7 @@ pipeline {
 			script {
 				echo 'Waiting till network ping tests have finished. This can take some minutes.'
 				echo "${env.LS}"
-				if (env.LS == 'proceed = "True"') {
+				if (env.LS == 'proceed = True') {
 					echo 'All pingtests succeeded.'
 					sleep( time: 2 )
             				echo 'The production network runs fine with the new changes :-)'
