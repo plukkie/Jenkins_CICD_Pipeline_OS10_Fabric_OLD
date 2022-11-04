@@ -47,6 +47,8 @@ pipeline {
 					echo 'Waiting for systems te become active'
 					sleep( time: 180 )
                                 }
+				//For testing
+				println(env.LS.indexOf('proceed'));
 				
 			}
       		}
