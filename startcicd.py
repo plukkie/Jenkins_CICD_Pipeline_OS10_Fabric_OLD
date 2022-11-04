@@ -53,7 +53,7 @@ def return_url ( settingsobject ):
                 else:
                     print('All nodes are already up & running, no need to start')
                     url = "proceed = True"
-
+            
         if 'stopgns3' in a[1:]: url = url + "/" + s['nodescheck'] + '/' + s['nodesstopuri']
 
     elif 'launchawx' in a[1:]: #It is a call to Ansible Tower
@@ -272,15 +272,15 @@ settings = readsettings ( settingsfile ) #Read settings to JSON object
 
 # Request API call
 urltuple = return_url ( settings ) #Return required URL, headers if needed & other option data
-print(urltuple)
+#print(urltuple)
 
 if urltuple[0] == 'proceed = True': #GNS3 is already running, Report back to proceed & exit
     print(urltuple[0])
     sys.exit()
 
 response = request ( urltuple, "post") #Request API POST request
-print(response)
-sys.exit()
+#print(response)
+
 if 'gns' in urltuple[2]['runtype'] and 'start' in urltuple[0]:
     print('proceed = Wait')
 
