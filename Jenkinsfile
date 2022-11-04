@@ -41,6 +41,7 @@ pipeline {
                                         sleep( time: 2 )
                                 }
 				else {
+					//GNS3 API call to start Network has just been done by startcicd.py script
 					echo 'Dev network is being provisioned. This can take ~3 mins'
         				//sh 'python3 -u startcicd.py startgns3 teststage'
 					echo 'Waiting for systems te become active'
@@ -96,11 +97,25 @@ pipeline {
         }
     	
 	stage('Stage Prod: Provision GNS3 prod network') {
-      		steps {
-			echo 'Request API call to GNS3 server to provision Prod fabric.'
-        		sh 'python3 -u startcicd.py startgns3 prodstage'
-			echo 'Waiting for systems te become active'
-			sleep( time: 180 )
+		
+		environment {
+			LS = "${sh(script:'python3 -u startcicd.py startgns3 prodstage | grep "proceed"', returnStdout: true).trim()}"
+    		}
+      		
+		steps {
+			script {
+				echo "${env.LS}" 
+				if (env.LS == 'proceed = True') {
+					echo 'Network already provisioned. Proceed to Stage Prod: Configure Prod network'
+                                        sleep( time: 2 )
+                                }
+				else {
+					//GNS3 API call to start Network has just been done by startcicd.py script
+					echo 'Prod network is being provisioned. This can take ~3 mins'
+					echo 'Waiting for systems te become active'
+					sleep( time: 180 )
+                                }
+			}
       		}
 	}
 
