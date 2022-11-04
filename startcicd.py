@@ -171,7 +171,7 @@ def jobstatuschecker ( dataobject ):
     - dataobject : json or string object, i.e. returned from API call
 
     return
-    - proceed : boolean (True or false)
+    - proceed : string (True, False or Retry)
 
     This function checks the status of an Ansible Tower Job.
     The dataobject is the return object of an previous started API call to start
@@ -183,7 +183,7 @@ def jobstatuschecker ( dataobject ):
     status   = ''
     failed   = ''
     finished = ''
-    proceed  = False #This can be used by Jenkins to determine if Chain is continuoud
+    proceed  = "False" #This can be used by Jenkins to determine if Chain is continuoud
     st       = 10 #Delay between check requests
     
     if type(dataobject) == str: dataobject = json.loads(dataobject) #From str to json
@@ -205,7 +205,8 @@ def jobstatuschecker ( dataobject ):
     
         response = request ( myurltuple, "get" ) #Request API call
         if type(response) == str: response = json.loads(response) #From str to json
-    
+   
+        #Get status of three keys available in the job dict
         result = { 
                    "jobstatus"   : response['status'],
                    "jobfailed"   : response['failed'],
@@ -219,7 +220,7 @@ def jobstatuschecker ( dataobject ):
         if status == 'successful':
             if failed == 'false' or failed == False:
                 print('\n Succesful job finish at ' + finished)
-                proceed = True
+                proceed = "True"
                 break
             else:
                 print('\n Job finished succesful but with failed result.')
@@ -227,7 +228,9 @@ def jobstatuschecker ( dataobject ):
             cont
         elif status == 'failed':
             if finished != None and finished != 'null':
-                print('\n Job finished with "failed" status. Check job logs on AWX. Will not proceed.')
+                print('\n Job finished with "failed" status. Check job logs on AWX.')
+                print(' Will notify to run job again.')
+                proceed = "Retry"
                 break
             else:
                 print('\n Job finished with "failed" status due to finish errors. Will not proceed.')
