@@ -128,9 +128,19 @@ pipeline {
 			script {
 				echo 'Waiting till network deployment has finished. This can take ~15 minutes.'
 				echo "${env.LS}"
-				if (env.LS == 'proceed = True') {
+				if (env.LS == 'proceed = True') { //100% oke
 					sleep( time: 10 )
-            				echo 'Proceed to Stage Pod fase Ping Tests'
+            				echo 'Proceed to Stage Prod fase Ping Tests'
+				else if (env.LS == 'proceed = Retry') {
+					echo 'There are failures in ansible playbook run. Retrying once...'
+					sleep( time: 2 )
+					LS = "${sh(script:'python3 -u startcicd.py launchawx prodstage deploy | grep "proceed"', returnStdout: true).trim()}"
+					if (env.LS == 'proceed = True') { //100% oke
+						sleep( time: 5 )
+            					echo 'Proceed to Stage Prod fase Ping Tests'
+					} else {
+						error ("There are concurrent failures in the job template execution. Pipeline stops here.")
+					}
         			} else {
             				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
