@@ -60,48 +60,56 @@ def return_url ( settingsobject ):
         toplevelkey = 'awx'
         s = settingsobject[toplevelkey]
         if 'httpheaders' in s: httpheaders = s['httpheaders']
-        url = s['prot']+s['serverip']+':'+s['serverport']+'/'+s['projecturi']
-        urltuple = ( url, httpheaders )
-        resp = request ( urltuple, 'get' )
-        if type(resp) == str: resp = json.loads(resp) #From str to json
-        
-        if 'teststage' in a[2:]:
-            if 'deploy' in a[3:]:
-                jtname = s['teststage_jobtemplate_name_deploy']
-            elif 'test' in a[3:]:
-                jtname = s['teststage_jobtemplate_name_test']
-            else:
-                print('No stagefase specified. Please add "deploy" or "test"')
-                sys.exit()
-        elif 'prodstage' in a[2:]:
-            if 'deploy' in a[3:]:
-                jtname = s['prodstage_jobtemplate_name_deploy']
-            elif 'test' in a[3:]:
-                jtname = s['prodstage_jobtemplate_name_test']
-            else:
-                print('No stagefase specified. Please add "deploy" or "test"')
-                sys.exit()
-        else:
-            print('No Stage specified. Please add "teststage" or "prodstage"')
-            sys.exit()
 
-        templates = resp['count']
+        if 'relaunch' in a[2:]:
+            relaunchsuffix = a[3:]
+            url = s['prot']+s['serverip']+':'+s['serverport'] + relaunchsuffix
+
+        else:
+            url = s['prot']+s['serverip']+':'+s['serverport']+'/'+s['projecturi']
+            urltuple = ( url, httpheaders )
+            resp = request ( urltuple, 'get' )
+            if type(resp) == str: resp = json.loads(resp) #From str to json
         
-        for jt in resp['results']: #search through available jobtemplates and find the one we need
-            #print(jtname)
-            #print(jt['name'])
-            if jtname == jt['name']: #found match
-                print('Found requested Job Template')
-                jturl = jt['url'] #This uri addon is needed to launch the template
-                jtid = jt['id'] #Job template id
-                print('Job Template ID : ' + str(jtid))
+            if jturl == "":
+                print('No matching Job template found on Ansible Tower for "' + jtname + '".')
+                print('Check spelling or the available Job templates on Tower.')
+                sys.exit()
         
-        if jturl == "":
-            print('No matching Job template found on Ansible Tower for "' + jtname + '".')
-            print('Check spelling or the available Job templates on Tower.')
-            sys.exit()
+            if 'teststage' in a[2:]:
+                if 'deploy' in a[3:]:
+                    jtname = s['teststage_jobtemplate_name_deploy']
+                elif 'test' in a[3:]:
+                    jtname = s['teststage_jobtemplate_name_test']
+                else:
+                    print('No stagefase specified. Please add "deploy" or "test"')
+                    sys.exit()
+
+            elif 'prodstage' in a[2:]:
+                if 'deploy' in a[3:]:
+                    jtname = s['prodstage_jobtemplate_name_deploy']
+                elif 'test' in a[3:]:
+                    jtname = s['prodstage_jobtemplate_name_test']
+                else:
+                    print('No stagefase specified. Please add "deploy" or "test"')
+                    sys.exit()
+      
+            else:
+                print('No Stage specified. Please add "teststage" or "prodstage"')
+                sys.exit()
+
+            templates = resp['count']
         
-        url = s['prot']+s['serverip']+':'+s['serverport'] + jturl + s['launchsuffix']+"/"
+            for jt in resp['results']: #search through available jobtemplates and find the one we need
+                #print(jtname)
+                #print(jt['name'])
+                if jtname == jt['name']: #found match
+                    print('Found requested Job Template')
+                    jturl = jt['url'] #This uri addon is needed to launch the template
+                    jtid = jt['id'] #Job template id
+                    print('Job Template ID : ' + str(jtid))
+        
+            url = s['prot']+s['serverip']+':'+s['serverport'] + jturl + s['launchsuffix']+"/"
 
     else: #No cli arguments given
         print('\nusage : ' + sys.argv[0] + ' <option>\n')
@@ -187,8 +195,10 @@ def jobstatuschecker ( dataobject ):
     st       = 10 #Delay between check requests
     
     if type(dataobject) == str: dataobject = json.loads(dataobject) #From str to json
-    print(dataobject) 
+    #print(dataobject) 
     urisuffix = dataobject['url'] #Catch the job url that was created
+    relaunchsuffix = dataobject['related']['relaunch']
+    #print(relaunchsuffix)
     s = settings['awx']
     url = s['prot']+s['serverip']+":"+s['serverport']+urisuffix #create uri for API call to awx to check job status
     myurltuple = ( url, urltuple[1] ) #Create urltuple with url and headers
@@ -229,8 +239,8 @@ def jobstatuschecker ( dataobject ):
         elif status == 'failed':
             if finished != None and finished != 'null':
                 print('\n Job finished with "failed" status. Check job logs on AWX.')
-                print(' Will notify to run job again.')
-                proceed = "Retry"
+                print(' Will notify to run job again on failed hosts.')
+                proceed = relaunchsuffix
                 break
             else:
                 print('\n Job finished with "failed" status due to finish errors. Will not proceed.')
@@ -259,7 +269,7 @@ if urltuple[0] == 'proceed = True': #GNS3 is already running, Report back to pro
     sys.exit()
 
 response = request ( urltuple, "post") #Request API POST request
-print(response)
+#print(response)
 
 if 'gns' in urltuple[2]['runtype'] and 'start' in urltuple[0]:
     print('proceed = Wait')
