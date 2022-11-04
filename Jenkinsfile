@@ -95,11 +95,11 @@ pipeline {
 				if (env.LS == 'proceed = True') {
 					echo 'All pingtests succeeded.'
 					sleep( time: 2 )
-					/*
+					
 					echo 'Will decommision Dev network to spare GNS3 resources...'
 					sleep( time: 2 )
 					sh 'python3 -u startcicd.py stopgns3 teststage'
-					*/
+					
             				echo 'Proceed to Stage Prod fase Provision'
 					sleep( time: 3 )
         			} else {
