@@ -47,6 +47,8 @@ pipeline {
 					echo 'Waiting for systems te become active'
 					sleep( time: 180 )
                                 }
+				String a = "Hello World"
+				println(a.indexOf('e'));
 			}
       		}
 	}
