@@ -36,7 +36,7 @@ pipeline {
 		steps {
 			script {
 				echo "${env.LS}" 
-				if (env.LS == 'proceed = "True"') {
+				if (env.LS == 'proceed = True') {
 					echo 'Network already provisioned. Proceed to Stage Dev: Configure Dev network'
                                         sleep( time: 2 )
                                 }
