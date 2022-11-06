@@ -2,23 +2,6 @@ pipeline {
   agent any
   
   stages {
-	 /*
-	  stage ('testing jenkins syntax') {
-		  environment {
-			     test = "/test/if/see/this/it/works"
-
-		  }
-		  steps {
-
-		 	 script {
-                     		 LS = "${sh(script:'python3 -u startcicd.py launchawx relaunch $test | grep "proceed"', returnStdout: true).trim()}"
-		    		  println env.LS
-				 error ('exit')
-			  }
-		  }
-         }
-	  */
-	  
 	  
 	stage('Build') {
 		steps {
