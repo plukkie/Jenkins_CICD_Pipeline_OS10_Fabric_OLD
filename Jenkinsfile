@@ -71,6 +71,7 @@ pipeline {
 	stage("Stage Dev: Configure Dev network") {
 		environment {
 			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage deploy | grep "proceed"', returnStdout: true).trim()}"
+			relaunchuri = ""
     		}
                             
 		steps {
