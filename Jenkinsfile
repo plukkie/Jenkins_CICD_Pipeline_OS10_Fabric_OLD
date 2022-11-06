@@ -4,9 +4,11 @@ pipeline {
   stages {
 	 
 	  stage ('testing jenkins syntax') {
-             
+		  environment {
+			     test = "/test/if/see/this/it/works"
+
+		  }
 		  steps {
-		   test = "/test/if/see/this/it/works"
 
 		 	 script {
                      		 LS = "${sh(script:'python3 -u startcicd.py launchawx relaunch $test | grep "proceed"', returnStdout: true).trim()}"
