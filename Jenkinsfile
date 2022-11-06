@@ -2,7 +2,7 @@ pipeline {
   agent any
   
   stages {
-	 /*
+	 
 	  stage ('testing jenkins syntax') {
 		  environment {
 			     test = "/test/if/see/this/it/works"
@@ -17,7 +17,7 @@ pipeline {
 			  }
 		  }
          }
-	  */
+	  
 	  
 	  
 	stage('Build') {
