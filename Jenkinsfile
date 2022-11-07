@@ -70,11 +70,9 @@ pipeline {
 					echo 'There are failures in ansible playbook run. Retrying once...'
 					sleep( time: 2 )
 					env.RL = "${sh(script:"""python3 -u startcicd.py launchawx relaunch $relaunchuri | grep 'proceed'""", returnStdout: true).trim()}"
-					echo "${env.RL}"
-					//println "Result after relaunch: ${env.LS}"
-					//env.LS = "${sh(script:"""python3 -u startcicd.py launchawx relaunch $relaunchuri | grep 'proceed'""", returnStdout: true).trim()}"
+					echo "${env.RL}" //Show for logging, clearity
 					
-					if (env.LS == 'proceed = True') { //100% oke
+					if (env.RL == 'proceed = True') { //100% oke
             					echo 'Proceed to Stage Dev fase Ping Tests'
 						sleep( time: 5 )
 					} else {
@@ -82,6 +80,7 @@ pipeline {
 					}
         			}
 				if (env.LS == 'proceed = False') {
+					println "${env.LS}, EXIT with error."
             				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
 			}
