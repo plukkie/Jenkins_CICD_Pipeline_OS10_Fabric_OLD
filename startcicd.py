@@ -15,12 +15,14 @@ def return_url ( settingsobject ):
     
     """
     input:
-    - settingsobject : JSOn object
+    - settingsobject : JSON object
 
     returns constructed url & httheaders if required
 
     This function reads cli arguments and reads corresponding settings from json file.
     It constructs the url for the API call & the required http headers.
+    With the urls, the receiver starts and stops gns3 projects and ansible tower templates.
+    This script is started by the Jenkins pipeline.
     """
     a = sys.argv
     url = ""
@@ -30,45 +32,46 @@ def return_url ( settingsobject ):
 
     if 'startgns3' in a[1:] or 'stopgns3' in a[1:]: #It is a call to a GNS3 project
         toplevelkey = 'gns3'
-        s = settingsobject[toplevelkey]
+        s = settingsobject[toplevelkey] #get gns3 keys from settings
         url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']+"/"
-        if 'teststage' in a[2:]:
+        if 'teststage' in a[2:]: #dev/test stage is specified
             url = url + s['teststageproject']
-        elif 'prodstage' in a[2:]:
+        elif 'prodstage' in a[2:]: #prod stage is specified
             url = url + s['prodstageproject']
         else:
             print('No Stage specified. Please add "teststage" or "prodstage"')
             sys.exit()
 
         if 'startgns3' in a[1:]:
-            checkurl = url + '/' + s['nodescheck']
+            checkurl = url + '/' + s['nodescheck'] #construct gns3 api to check node status
             urltuple = ( checkurl, httpheaders )
             print('Check if nodes in GNS3 are already running...')
             resp = request ( urltuple, 'get' ) #Check status of all nodes in the project
             if type(resp) == str: resp = json.loads(resp) #From str to json
-            stopped = False
-            for item in resp:
+            stopped = False #used to track if a gns3 node is stopped
+            for item in resp: #find all nodes and their status
                 status = item['status'].lower()
                 if status == 'stopped': #Stopped node, need to start all nodes with API request
                     stopped = True
                     print('There is a stopped node. Will start all nodes now in GNS3')
                     url = url +  "/" + s['nodescheck'] + '/' + s['nodesstarturi']
-                    break
+                    break #exit loop
 
-            if stopped == False: url = "proceed = True"
-
+            if stopped == False: url = "proceed = True" #All nodes already started, jenkins can proceed
+  
+        #stop all gns3 nodes
         if 'stopgns3' in a[1:]: url = url + "/" + s['nodescheck'] + '/' + s['nodesstopuri']
 
     elif 'launchawx' in a[1:]: #It is a call to Ansible Tower
         toplevelkey = 'awx'
-        s = settingsobject[toplevelkey]
+        s = settingsobject[toplevelkey] #get tower details from settings
         if 'httpheaders' in s: httpheaders = s['httpheaders']
 
-        if 'relaunch' in a[2:]:
-            relaunchsuffix = str(a[3])
+        if 'relaunch' in a[2:]: #their were failed playbook runs and a relaunch was requested
+            relaunchsuffix = str(a[3]) #the job relaunch uri of the failed job
             url = s['prot']+s['serverip']+':'+s['serverport'] + relaunchsuffix
 
-        else:
+        else: #tower find template matched to setting file
             url = s['prot']+s['serverip']+':'+s['serverport']+'/'+s['projecturi']
             urltuple = ( url, httpheaders )
             resp = request ( urltuple, 'get' )
