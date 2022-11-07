@@ -156,15 +156,19 @@ pipeline {
 					println "${relaunchuri}"
 					echo 'There are failures in ansible playbook run. Retrying once...'
 					sleep( time: 2 )
-					LS = "${sh(script:"""python3 -u startcicd.py launchawx relaunch $relaunchuri | grep proceed""", returnStdout: true).trim()}"
-					if (env.LS == 'proceed = True') { //100% oke
-						sleep( time: 5 )
+					env.RL = "${sh(script:"""python3 -u startcicd.py launchawx relaunch $relaunchuri | grep 'proceed'""", returnStdout: true).trim()}"
+					echo "${env.RL}" //Show for logging, clearity
+					
+					if (env.RL == 'proceed = True') { //100% oke
             					echo 'Proceed to Stage Prod fase Ping Tests'
+						sleep( time: 5 )
 					} else {
+						println "${env.RL}, EXIT with error from else statement."
 						error ("There are concurrent failures in the job template execution. Pipeline stops here.")
 					}
         			}
 				if (env.LS == 'proceed = False') {
+					println "${env.LS}, EXIT with error from last if (env.LS) statement."
             				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
 			}
