@@ -35,7 +35,7 @@ pipeline {
       		
 		steps {
 			script {
-				//echo "${env.LS}" //This is needed to execute the env var LS 
+				//echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
 					echo 'Network already provisioned. Proceed to Stage Dev: Configure Dev network'
                                         sleep( time: 2 )
@@ -71,15 +71,15 @@ pipeline {
 					println "${relaunchuri}"
 					echo 'There are failures in ansible playbook run. Retrying once...'
 					sleep( time: 2 )
-					
-					relaunchresult = "${sh(script:"""python3 -u startcicd.py launchawx relaunch $relaunchuri | grep 'proceed'""", returnStdout: true).trim()}"
-
+					environment {
+						relaunchresult = "${sh(script:"""python3 -u startcicd.py launchawx relaunch $relaunchuri | grep 'proceed'""", returnStdout: true).trim()}"
+					}
+					echo "$env.relaunchresult}"
 					//env.LS = "${sh(script:"""python3 -u startcicd.py launchawx relaunch $relaunchuri | grep 'proceed'""", returnStdout: true).trim()}"
 					
 					if (env.relaunchresult == 'proceed = True') { //100% oke
-						echo "${env.relaunchresult}"
-						sleep( time: 5 )
             					echo 'Proceed to Stage Dev fase Ping Tests'
+						sleep( time: 5 )
 					} else {
 						error ("There are concurrent failures in the job template execution. Pipeline stops here.")
 					}
