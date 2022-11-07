@@ -55,6 +55,7 @@ pipeline {
 		environment {
 			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage deploy | grep "proceed"', returnStdout: true).trim()}"
 			relaunchuri = ""
+			relaunchresult = ""
     		}
                             
 		steps {
@@ -70,12 +71,13 @@ pipeline {
 					println "${relaunchuri}"
 					echo 'There are failures in ansible playbook run. Retrying once...'
 					sleep( time: 2 )
-					environment {
-						relaunchresult = "${sh(script:"""python3 -u startcicd.py launchawx relaunch $relaunchuri | grep 'proceed'""", returnStdout: true).trim()}"
-					}
+					
+					relaunchresult = "${sh(script:"""python3 -u startcicd.py launchawx relaunch $relaunchuri | grep 'proceed'""", returnStdout: true).trim()}"
+
 					//env.LS = "${sh(script:"""python3 -u startcicd.py launchawx relaunch $relaunchuri | grep 'proceed'""", returnStdout: true).trim()}"
-					echo "${env.relaunchresult}"
+					
 					if (env.relaunchresult == 'proceed = True') { //100% oke
+						echo "${env.relaunchresult}"
 						sleep( time: 5 )
             					echo 'Proceed to Stage Dev fase Ping Tests'
 					} else {
