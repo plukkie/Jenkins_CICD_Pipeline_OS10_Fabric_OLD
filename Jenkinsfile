@@ -71,7 +71,7 @@ pipeline {
 					echo 'There are failures in ansible playbook run. Retrying once...'
 					sleep( time: 2 )
 					environment {
-						relaunchresult = "${sh(script:"""python3 -u startcicd.py launchawx relaunch $relaunchuri | grep 'proceed'""", returnStdout: true).trim()}"
+						relaunchresult = "${sh(script:"""python3 -u startcicd.py launchawx relaunch $relaunchuri | grep proceed""", returnStdout: true).trim()}"
 					}
 					echo "${env.relaunchresult}"
 					//env.LS = "${sh(script:"""python3 -u startcicd.py launchawx relaunch $relaunchuri | grep 'proceed'""", returnStdout: true).trim()}"
