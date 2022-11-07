@@ -55,7 +55,6 @@ pipeline {
 		environment {
 			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage deploy | grep "proceed"', returnStdout: true).trim()}"
 			relaunchuri = ""
-			relaunchresult = ""
     		}
                             
 		steps {
@@ -74,7 +73,7 @@ pipeline {
 					environment {
 						relaunchresult = "${sh(script:"""python3 -u startcicd.py launchawx relaunch $relaunchuri | grep 'proceed'""", returnStdout: true).trim()}"
 					}
-					echo "$env.relaunchresult}"
+					echo "${env.relaunchresult}"
 					//env.LS = "${sh(script:"""python3 -u startcicd.py launchawx relaunch $relaunchuri | grep 'proceed'""", returnStdout: true).trim()}"
 					
 					if (env.relaunchresult == 'proceed = True') { //100% oke
