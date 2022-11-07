@@ -76,11 +76,12 @@ pipeline {
             					echo 'Proceed to Stage Dev fase Ping Tests'
 						sleep( time: 5 )
 					} else {
+						println "${env.RL}, EXIT with error from else statement."
 						error ("There are concurrent failures in the job template execution. Pipeline stops here.")
 					}
         			}
 				if (env.LS == 'proceed = False') {
-					println "${env.LS}, EXIT with error."
+					println "${env.LS}, EXIT with error from last if (env.LS) statement."
             				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
 			}
