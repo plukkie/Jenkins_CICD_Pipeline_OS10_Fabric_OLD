@@ -74,10 +74,10 @@ def return_url ( settingsobject ):
         else: #tower find template matched to setting file
             url = s['prot']+s['serverip']+':'+s['serverport']+'/'+s['projecturi']
             urltuple = ( url, httpheaders )
-            resp = request ( urltuple, 'get' )
+            resp = request ( urltuple, 'get' ) #get all job templates from tower
             if type(resp) == str: resp = json.loads(resp) #From str to json
         
-            if 'teststage' in a[2:]:
+            if 'teststage' in a[2:]: #dev/test stage specified
                 if 'deploy' in a[3:]:
                     jtname = s['teststage_jobtemplate_name_deploy']
                 elif 'test' in a[3:]:
@@ -86,7 +86,7 @@ def return_url ( settingsobject ):
                     print('No stagefase specified. Please add "deploy" or "test"')
                     sys.exit()
 
-            elif 'prodstage' in a[2:]:
+            elif 'prodstage' in a[2:]: #prod stage specified
                 if 'deploy' in a[3:]:
                     jtname = s['prodstage_jobtemplate_name_deploy']
                 elif 'test' in a[3:]:
@@ -99,7 +99,7 @@ def return_url ( settingsobject ):
                 print('No Stage specified. Please add "teststage" or "prodstage"')
                 sys.exit()
 
-            templates = resp['count']
+            templates = resp['count'] #number of job templates found
         
             for jt in resp['results']: #search through available jobtemplates and find the one we need
                 #print(jtname)
@@ -115,6 +115,7 @@ def return_url ( settingsobject ):
                 print('Check spelling or the available Job templates on Tower.')
                 sys.exit()
         
+            #this is the api url to start the job template
             url = s['prot']+s['serverip']+':'+s['serverport'] + jturl + s['launchsuffix']+"/"
 
     else: #No cli arguments given
@@ -126,9 +127,9 @@ def return_url ( settingsobject ):
         print('=========================================================')
         sys.exit()
 
-    if 'relaunch' in url: 
+    if 'relaunch' in url: #a job relaunch is requested, add failed hosts only
         return url, httpheaders, { "runtype" : toplevelkey }, { "hosts" : "failed" }
-    else:
+    else: #normal job template url
         return url, httpheaders, { "runtype" : toplevelkey }, {}
 
 
@@ -193,7 +194,7 @@ def jobstatuschecker ( dataobject ):
     - dataobject : json or string object, i.e. returned from API call
 
     return
-    - proceed : string (True, False or Retry)
+    - proceed : string (True, False or relaunch url)
 
     This function checks the status of an Ansible Tower Job.
     The dataobject is the return object of an previous started API call to start
@@ -205,13 +206,13 @@ def jobstatuschecker ( dataobject ):
     status   = ''
     failed   = ''
     finished = ''
-    proceed  = "False" #This can be used by Jenkins to determine if Chain is continuoud
+    proceed  = "False" #This can be used by Jenkins to determine if pipeline should continue
     st       = 10 #Delay between check requests
     
     if type(dataobject) == str: dataobject = json.loads(dataobject) #From str to json
     #print(dataobject) 
     urisuffix = dataobject['url'] #Catch the job url that was created
-    relaunchsuffix = dataobject['related']['relaunch']
+    relaunchsuffix = dataobject['related']['relaunch'] #needed if relaunch is needed
     #print(relaunchsuffix)
     s = settings['awx']
     url = s['prot']+s['serverip']+":"+s['serverport']+urisuffix #create uri for API call to awx to check job status
@@ -225,7 +226,7 @@ def jobstatuschecker ( dataobject ):
 
     print('\n Starting jobchecker. Waiting till AWX template finishes its job...')
 
-    while True:
+    while True: #check job status. when finished return status, used by jenkins
     
         response = request ( myurltuple, "get" ) #Request API call
         if type(response) == str: response = json.loads(response) #From str to json
@@ -251,7 +252,7 @@ def jobstatuschecker ( dataobject ):
                 break
             cont
         elif status == 'failed':
-            if finished != None and finished != 'null':
+            if finished != None and finished != 'null': #return relaunch task to jenkins
                 print('\n Job finished with "failed" status. Check job logs on AWX.')
                 print(' Will notify to run job again on failed hosts.')
                 proceed = relaunchsuffix
@@ -280,19 +281,19 @@ urltuple = return_url ( settings ) #Return required URL, headers if needed & oth
 #print(urltuple)
 
 if urltuple[0] == 'proceed = True': #GNS3 is already running, Report back to proceed & exit
-    print(urltuple[0])
+    print(urltuple[0]) #output used by jenkins
     sys.exit()
 
 response = request ( urltuple, "post") #Request API POST request
 #print(response)
 
 if 'gns' in urltuple[2]['runtype'] and 'start' in urltuple[0]:
-    print('proceed = Wait')
+    print('proceed = Wait') #used by jenkins
 
 
 #If AWX project was launched, check its jobstatus till finished
 if 'awx' in urltuple[2]['runtype']:
     checkresult = jobstatuschecker ( response )
-    print('proceed =', checkresult)
+    print('proceed =', checkresult) #used by jenkins
 
 
