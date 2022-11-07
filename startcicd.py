@@ -41,19 +41,22 @@ def return_url ( settingsobject ):
             sys.exit()
 
         if 'startgns3' in a[1:]:
-            url = url + '/' + s['nodescheck']
-            urltuple = ( url, httpheaders )
+            checkurl = url + '/' + s['nodescheck']
+            urltuple = ( checkurl, httpheaders )
+            print('Check if nodes in GNS3 are already running...')
             resp = request ( urltuple, 'get' ) #Check status of all nodes in the project
             if type(resp) == str: resp = json.loads(resp) #From str to json
+            stopped = False
             for item in resp:
                 status = item['status'].lower()
                 if status == 'stopped': #Stopped node, need to start all nodes with API request
-                    url = url+"/"+s['nodesstarturi']
+                    stopped = True
+                    print('There is a stopped node. Will start all nodes now in GNS3')
+                    url = url +  "/" + s['nodescheck'] + '/' + s['nodesstarturi']
                     break
-                else:
-                    print('All nodes are already up & running, no need to start')
-                    url = "proceed = True"
-            
+
+            if stopped == False: url = "proceed = True"
+
         if 'stopgns3' in a[1:]: url = url + "/" + s['nodescheck'] + '/' + s['nodesstopuri']
 
     elif 'launchawx' in a[1:]: #It is a call to Ansible Tower
@@ -124,7 +127,6 @@ def return_url ( settingsobject ):
         return url, httpheaders, { "runtype" : toplevelkey }, { "hosts" : "failed" }
     else:
         return url, httpheaders, { "runtype" : toplevelkey }, {}
-
 
 
 
@@ -272,7 +274,7 @@ settings = readsettings ( settingsfile ) #Read settings to JSON object
 
 # Request API call
 urltuple = return_url ( settings ) #Return required URL, headers if needed & other option data
-#print(urltuple)
+print(urltuple)
 
 if urltuple[0] == 'proceed = True': #GNS3 is already running, Report back to proceed & exit
     print(urltuple[0])
