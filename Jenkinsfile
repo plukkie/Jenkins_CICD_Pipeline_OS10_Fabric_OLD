@@ -58,7 +58,7 @@ pipeline {
 	stage("Stage Dev: Configure Dev network") {
 
 		environment {
-			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage deploy | grep "proceed"', returnStdout: true).trim()}"
+			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage configure | grep "proceed"', returnStdout: true).trim()}"
     		}
                             
 		steps {			
@@ -152,7 +152,7 @@ pipeline {
 
 	stage("Stage Prod: Configure Prod network") {
 		environment {
-			LS = "${sh(script:'python3 -u startcicd.py launchawx prodstage deploy | grep "proceed"', returnStdout: true).trim()}"
+			LS = "${sh(script:'python3 -u startcicd.py launchawx prodstage configure | grep "proceed"', returnStdout: true).trim()}"
 			relaunchuri = ""
     		}
                             
