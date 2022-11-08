@@ -53,12 +53,10 @@ pipeline {
 	}
 
 	stage("Stage Dev: Configure Dev network") {
-		steps {
-			echo 'Launching configuration Job template on Ansible Tower to configure Dev network.'
-			echo 'Waiting till Job has finished. This can take ~15 minutes...'
-		}
 		
 		environment {
+			echo 'Launching configuration Job template on Ansible Tower to configure Dev network.'
+			echo 'Waiting till Job has finished. This can take ~15 minutes...'
 			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage deploy | grep "proceed"', returnStdout: true).trim()}"
     		}
                             
