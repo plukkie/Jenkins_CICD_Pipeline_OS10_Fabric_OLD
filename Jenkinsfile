@@ -48,7 +48,7 @@ pipeline {
 					echo 'Waiting for systems te become active...'
 					sleep( time: 180 )
 					echo 'Done. Systems active.'
-					echo 'Proceed to Configuration on Dev Network.'
+					echo 'Proceed to Configuration of Dev Network.'
 					echo 'This can take ~15 minutes...'
                                 }
 			}
