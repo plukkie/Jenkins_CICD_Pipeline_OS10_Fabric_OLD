@@ -322,8 +322,10 @@ def provisiongns3project (jsonobject):
                 urltuple = ( url, httpheaders )
                 for loop in range (0, count): #Provision all devices for this role
                     resp = request ( urltuple, "post", pos )
+                    time.sleep(1)
                     x += npj['posshift'] #How much to shift next device icon
                     pos = { "x" : x, "y" : y } 
+                    print(resp)
     
                 
 
