@@ -16,10 +16,10 @@
 		"prot"		: "http://",
 		"projecturi"	: "api/v2/job_templates",
 		"jobtemplateid"	: "13",
-		"teststage_jobtemplate_name_test" : "Template Stage TEST OS10 EVPN Fabric fase PINGTESTS",
-		"teststage_jobtemplate_name_deploy" : "Template Stage TEST OS10 EVPN Fabric fase DEPLOY",
+		"teststage_jobtemplate_name_test" : "Template Stage DEV OS10 EVPN Fabric fase PINGTESTS",
+		"teststage_jobtemplate_name_deploy" : "Template Stage DEV OS10 EVPN Fabric fase CONFIG",
 		"prodstage_jobtemplate_name_test" : "Template Stage PROD OS10 EVPN Fabric fase PINGTESTS",
-		"prodstage_jobtemplate_name_deploy" : "Template Stage PROD OS10 EVPN Fabric fase DEPLOY",
+		"prodstage_jobtemplate_name_deploy" : "Template Stage PROD OS10 EVPN Fabric fase CONFIG",
 		"launchsuffix"	: "launch",
 		"httpheaders"	: { "Authorization" : "Bearer Ey8BiQpWEhYD6X5UHWuWk6tACAIdbP" }
 	}
