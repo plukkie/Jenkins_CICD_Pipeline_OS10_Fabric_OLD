@@ -78,21 +78,21 @@ def return_url ( settingsobject ):
             if type(resp) == str: resp = json.loads(resp) #From str to json
         
             if 'teststage' in a[2:]: #dev/test stage specified
-                if 'deploy' in a[3:]:
+                if 'configure' in a[3:]:
                     jtname = s['teststage_jobtemplate_name_deploy']
                 elif 'test' in a[3:]:
                     jtname = s['teststage_jobtemplate_name_test']
                 else:
-                    print('No stagefase specified. Please add "deploy" or "test"')
+                    print('No stagefase specified. Please add "configure" or "test"')
                     sys.exit()
 
             elif 'prodstage' in a[2:]: #prod stage specified
-                if 'deploy' in a[3:]:
+                if 'configure' in a[3:]:
                     jtname = s['prodstage_jobtemplate_name_deploy']
                 elif 'test' in a[3:]:
                     jtname = s['prodstage_jobtemplate_name_test']
                 else:
-                    print('No stagefase specified. Please add "deploy" or "test"')
+                    print('No stagefase specified. Please add "configure" or "test"')
                     sys.exit()
       
             else:
