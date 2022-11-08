@@ -53,14 +53,18 @@ pipeline {
 	}
 
 	stage("Stage Dev: Configure Dev network") {
+		
+		println 'Launching configuration Job template on Ansible Tower to configure Dev network.'
+		println 'Waiting till Job has finished. This can take ~15 minutes...'
+		
 		environment {
 			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage deploy | grep "proceed"', returnStdout: true).trim()}"
     		}
                             
 		steps {
 			script {
-				echo 'Configure Dev network with Ansible Tower.'
-				echo 'Waiting till Job has finished. This can take ~15 minutes...'
+				//echo 'Configure Dev network with Ansible Tower.'
+				//echo 'Waiting till Job has finished. This can take ~15 minutes...'
 				//echo "${env.LS}"
 				if (env.LS == 'proceed = True') { //100% oke
 					sleep( time: 10 )
