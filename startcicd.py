@@ -34,12 +34,12 @@ def return_url ( settingsobject ):
         toplevelkey = 'gns3'
         s = settingsobject[toplevelkey] #get gns3 keys from settings
         url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']+"/"
-        if 'teststage' in a[2:]: #dev/test stage is specified
+        if 'devstage' in a[2:]: #dev/test stage is specified
             url = url + s['teststageproject']
         elif 'prodstage' in a[2:]: #prod stage is specified
             url = url + s['prodstageproject']
         else:
-            print('No Stage specified. Please add "teststage" or "prodstage"')
+            print('No Stage specified. Please add "devstage" or "prodstage"')
             sys.exit()
 
         if 'startgns3' in a[1:]:
@@ -77,7 +77,7 @@ def return_url ( settingsobject ):
             resp = request ( urltuple, 'get' ) #get all job templates from tower
             if type(resp) == str: resp = json.loads(resp) #From str to json
         
-            if 'teststage' in a[2:]: #dev/test stage specified
+            if 'devstage' in a[2:]: #dev/test stage specified
                 if 'configure' in a[3:]:
                     jtname = s['teststage_jobtemplate_name_deploy']
                 elif 'test' in a[3:]:
@@ -96,7 +96,7 @@ def return_url ( settingsobject ):
                     sys.exit()
       
             else:
-                print('No Stage specified. Please add "teststage" or "prodstage"')
+                print('No Stage specified. Please add "devstage" or "prodstage"')
                 sys.exit()
 
             templates = resp['count'] #number of job templates found
@@ -120,9 +120,9 @@ def return_url ( settingsobject ):
 
     else: #No cli arguments given
         print('\nusage : ' + sys.argv[0] + ' <option>\n')
-        print(' - startgns3 : will start GNS3 project')
-        print(' - stopgns3  : will stop GNS3 project')
-        print(' - launchawx teststage: will start job template for test env on Ansible tower')
+        print(' - startgns3 devstage/prodstage : will start GNS3 project')
+        print(' - stopgns3 devstage/prodstage : will stop GNS3 project')
+        print(' - launchawx devstage: will start job template for test env on Ansible tower')
         print(' - launchawx prodstage: will start job template for prod env on Ansible tower')
         print('=========================================================')
         sys.exit()
