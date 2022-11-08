@@ -38,6 +38,7 @@ pipeline {
 				//echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
 					echo 'Network already provisioned. Proceed to Stage Dev: Configure Dev network.'
+					echo 'This can take ~15 minutes...'
                                         sleep( time: 2 )
                                 }
 				else {
@@ -58,18 +59,15 @@ pipeline {
 			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage deploy | grep "proceed"', returnStdout: true).trim()}"
     		}
                             
-		steps {
-			echo 'Launching configuration Job template on Ansible Tower to configure Dev network.'
-			echo 'Waiting till Job has finished. This can take ~15 minutes...'
-			
+		steps {			
 			script {
-				echo 'Configure Dev network with Ansible Tower.'
-				echo 'Waiting till Job has finished. This can take ~15 minutes...'
+				echo 'Configuration Job finished.'
 				//echo "${env.LS}"
 				if (env.LS == 'proceed = True') { //100% oke
 					sleep( time: 10 )
 					echo 'Succesfull Job completion.'
             				echo 'Proceed to Stage Dev fase Ping Tests.'
+					echo 'This can take some minutes...'
 				}
 				if (env.LS.indexOf('relaunch') != -1) { //a relaunch was proposed, there were failures
 					relaunchuri = env.LS.substring(env.LS.lastIndexOf('=') + 1, env.LS.length())
@@ -82,6 +80,7 @@ pipeline {
 					if (env.RL == 'proceed = True') { //100% oke
 						echo 'Succesfull Job completion.'
             					echo 'Proceed to Stage Dev fase Ping Tests.'
+						echo 'This can take some minutes...'
 						sleep( time: 5 )
 					} else {
 						println "Concurrent failures in Configuration Job. ${env.RL}, EXIT with error from else statement."
@@ -104,8 +103,7 @@ pipeline {
             
 		steps {
 			script {
-				echo 'Starting Job connectivity testing on Dev network with Ansible Tower.'
-				echo 'Waiting till ping tests have finished. This can take some minutes...'
+				echo 'Ping tests finished.'
 				//echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
 					echo 'All pingtests succesful.'
@@ -114,7 +112,7 @@ pipeline {
 					echo 'Will decommision Dev network to spare GNS3 resources...'
 					sleep( time: 2 )
 					sh 'python3 -u startcicd.py stopgns3 teststage' //Stop GNS3 project
-            				echo 'Proceed to Stage Prod fase Configuration.'
+            				echo 'Proceed to Stage Prod fase Provisioning.'
 					sleep( time: 3 )
         			} else {
 					echo 'Pingtests failed! Something wrong in the change code?'
@@ -136,6 +134,7 @@ pipeline {
 				if (env.LS == 'proceed = True') {
 					echo 'Prod network is already provisioned.'
 					echo 'Will proceed to Stage Prod: Configure network.'
+					echo 'This can take ~15 mins...'
                                         sleep( time: 2 )
                                 }
 				else {
@@ -157,13 +156,14 @@ pipeline {
                             
 		steps {
 			script {
-				echo 'Configure Prod network with Ansible Tower.'
-				echo 'Waiting till Job has finished. This can take ~15 minutes...'
+				echo 'Configuration of Prod network finished.'
+				echo 'Waiting 10 secs to let the network converge...'
 				//echo "${env.LS}"
 				if (env.LS == 'proceed = True') { //100% oke
 					sleep( time: 10 )
 					echo 'Succesfull Job completion.'
             				echo 'Proceed to Stage Prod fase Ping Tests.'
+					echo 'This can take some minutes...'
 				}
 				if (env.LS.indexOf('relaunch') != -1) { //a relaunch was proposed, there were failures
 					relaunchuri = env.LS.substring(env.LS.lastIndexOf('=') + 1, env.LS.length())
@@ -176,6 +176,7 @@ pipeline {
 					if (env.RL == 'proceed = True') { //100% oke
 						echo 'Succesfull Job completion.'
             					echo 'Proceed to Stage Prod fase Ping Tests.'
+						echo 'This can take some minutes...'
 						sleep( time: 5 )
 					} else {
 						println "Concurrent failures in Configuration Job. ${env.RL}, EXIT with error from else statement."
@@ -198,8 +199,7 @@ pipeline {
             
 		steps {
 			script {
-				echo 'Starting Job connectivity testing on Prod network with Ansible Tower.'
-				echo 'Waiting till network ping tests have finished. This can take some minutes...'
+				echo 'Job pingtests has Finished on Prod network.'
 				//echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
 					echo 'All pingtests succeeded.'
