@@ -13,7 +13,7 @@ pipeline {
 
     	stage('Show host versions') {
       		steps {
-			echo 'Get python3 versions:'
+			echo 'Show python3 versions:'
         		sh 'python3 --version'
 			sh 'pip3 list'
       		}
@@ -21,7 +21,7 @@ pipeline {
 	//This stage is to spare on resources in the Compute platform (Dev & Prod run together gives problems) 
     	stage('Stop GNS3 Stage PROD') {
       		steps {
-			echo 'Request API call to GNS3 server to stop Prod fabric.'
+			echo 'Shutting down Prod fabric to conserve compute resources..'
         		sh 'python3 -u startcicd.py stopgns3 prodstage'
 			sleep( time: 3 )
       		}
@@ -44,7 +44,7 @@ pipeline {
 					//GNS3 API call to start Network has just been done by startcicd.py script
 					echo 'Dev network is being provisioned. This can take ~3 mins'
         				//sh 'python3 -u startcicd.py startgns3 teststage'
-					echo 'Waiting for systems te become active'
+					echo 'Waiting for systems te become active...'
 					sleep( time: 180 )
                                 }
 			}
@@ -58,29 +58,33 @@ pipeline {
                             
 		steps {
 			script {
-				echo 'Waiting till network configuration has finished. This can take ~15 minutes.'
-				echo "${env.LS}"
+				echo 'Configure Dev network with Ansible Tower.'
+				echo 'Waiting till Job has finished. This can take ~15 minutes...'
+				//echo "${env.LS}"
 				if (env.LS == 'proceed = True') { //100% oke
 					sleep( time: 10 )
-            				echo 'Proceed to Stage Dev fase Ping Tests'
+					echo 'Succesfull Job completion.'
+            				echo 'Proceed to Stage Dev fase Ping Tests.'
 				}
 				if (env.LS.indexOf('relaunch') != -1) { //a relaunch was proposed, there were failures
 					relaunchuri = env.LS.substring(env.LS.lastIndexOf('=') + 1, env.LS.length())
 					println "${relaunchuri}"
-					echo 'There are failures in ansible playbook run. Retrying once...'
+					echo 'There are failures in Ansible playbook run. Retrying once on failed hosts...'
 					sleep( time: 2 )
 					env.RL = "${sh(script:"""python3 -u startcicd.py launchawx relaunch $relaunchuri | grep 'proceed'""", returnStdout: true).trim()}"
-					echo "${env.RL}" //Show for logging, clearity
+					//echo "${env.RL}" //Show for logging, clearity
 					
 					if (env.RL == 'proceed = True') { //100% oke
-            					echo 'Proceed to Stage Dev fase Ping Tests'
+						echo 'Succesfull Job completion.'
+            					echo 'Proceed to Stage Dev fase Ping Tests.'
 						sleep( time: 5 )
 					} else {
-						println "${env.RL}, EXIT with error from else statement."
+						println "Concurrent failures in Configuration Job. ${env.RL}, EXIT with error from else statement."
 						error ("There are concurrent failures in the job template execution. Pipeline stops here.")
 					}
         			}
 				if (env.LS == 'proceed = False') {
+					echo 'Job execution failed.'
 					println "${env.LS}, EXIT with error from last if (env.LS) statement."
             				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
@@ -95,19 +99,20 @@ pipeline {
             
 		steps {
 			script {
-				echo 'Waiting till network ping tests have finished. This can take some minutes.'
-				echo "${env.LS}"
+				echo 'Starting Job connectivity testing on Dev network with Ansible Tower.'
+				echo 'Waiting till ping tests have finished. This can take some minutes...'
+				//echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
-					echo 'All pingtests succeeded.'
+					echo 'All pingtests succesful.'
 					sleep( time: 2 )
 					//This step is to spare on resources in the Compute platform (Dev & Prod run together gives problems) 
 					echo 'Will decommision Dev network to spare GNS3 resources...'
 					sleep( time: 2 )
-					sh 'python3 -u startcicd.py stopgns3 teststage'
-					
-            				echo 'Proceed to Stage Prod fase Provision'
+					sh 'python3 -u startcicd.py stopgns3 teststage' //Stop GNS3 project
+            				echo 'Proceed to Stage Prod fase Configuration.'
 					sleep( time: 3 )
         			} else {
+					echo 'Pingtests failed! Something wrong in the change code?'
             				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
 			}
@@ -122,15 +127,16 @@ pipeline {
       		
 		steps {
 			script {
-				echo "${env.LS}" 
+				//echo "${env.LS}" 
 				if (env.LS == 'proceed = True') {
-					echo 'Network already provisioned. Proceed to Stage Prod: Configure Prod network'
+					echo 'Prod network is already provisioned.'
+					echo 'Will proceed to Stage Prod: Configure network.'
                                         sleep( time: 2 )
                                 }
 				else {
 					//GNS3 API call to start Network has just been done by startcicd.py script
-					echo 'Prod network is being provisioned. This can take ~3 mins'
-					echo 'Waiting for systems te become active'
+					echo 'Prod network is being provisioned. This can take ~3 mins.'
+					echo 'Waiting for systems te become active...'
 					sleep( time: 180 )
                                 }
 			}
@@ -145,29 +151,33 @@ pipeline {
                             
 		steps {
 			script {
-				echo 'Waiting till network deployment has finished. This can take ~15 minutes.'
-				echo "${env.LS}"
+				echo 'Configure Prod network with Ansible Tower.'
+				echo 'Waiting till Job has finished. This can take ~15 minutes...'
+				//echo "${env.LS}"
 				if (env.LS == 'proceed = True') { //100% oke
 					sleep( time: 10 )
-            				echo 'Proceed to Stage Prod fase Ping Tests'
+					echo 'Succesfull Job completion.'
+            				echo 'Proceed to Stage Prod fase Ping Tests.'
 				}
 				if (env.LS.indexOf('relaunch') != -1) { //a relaunch was proposed, there were failures
 					relaunchuri = env.LS.substring(env.LS.lastIndexOf('=') + 1, env.LS.length())
 					println "${relaunchuri}"
-					echo 'There are failures in ansible playbook run. Retrying once...'
+					echo 'There are failures in ansible playbook run. Retrying once on failed hosts...'
 					sleep( time: 2 )
 					env.RL = "${sh(script:"""python3 -u startcicd.py launchawx relaunch $relaunchuri | grep 'proceed'""", returnStdout: true).trim()}"
-					echo "${env.RL}" //Show for logging, clearity
+					//echo "${env.RL}" //Show for logging, clearity
 					
 					if (env.RL == 'proceed = True') { //100% oke
-            					echo 'Proceed to Stage Prod fase Ping Tests'
+						echo 'Succesfull Job completion.'
+            					echo 'Proceed to Stage Prod fase Ping Tests.'
 						sleep( time: 5 )
 					} else {
-						println "${env.RL}, EXIT with error from else statement."
+						println "Concurrent failures in Configuration Job. ${env.RL}, EXIT with error from else statement."
 						error ("There are concurrent failures in the job template execution. Pipeline stops here.")
 					}
         			}
 				if (env.LS == 'proceed = False') {
+					echo 'Job execution failed.'
 					println "${env.LS}, EXIT with error from last if (env.LS) statement."
             				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
@@ -182,14 +192,19 @@ pipeline {
             
 		steps {
 			script {
-				echo 'Waiting till network ping tests have finished. This can take some minutes.'
-				echo "${env.LS}"
+				echo 'Starting Job connectivity testing on Prod network with Ansible Tower.'
+				echo 'Waiting till network ping tests have finished. This can take some minutes...'
+				//echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
 					echo 'All pingtests succeeded.'
 					sleep( time: 2 )
-            				echo 'The production network runs fine with the new changes :-)'
+            				echo 'The production network runs fine with the new changes. Well done! :-)'
 					sleep( time: 2 )
         			} else {
+					echo 'ALERT - ALERT - ALERT.'
+					echo 'Production network could be down or affect connectivity currently.'
+					echo 'Pingtests failed! Something wrong in the change code?'
+					echo 'Advise: rollback your change.'
             				error ("There were failures in the job template execution. Pipeline stops here.")
         			}
 			}
