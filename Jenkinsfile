@@ -46,6 +46,7 @@ pipeline {
         				//sh 'python3 -u startcicd.py startgns3 teststage'
 					echo 'Waiting for systems te become active...'
 					sleep( time: 180 )
+					echo 'Done. Systems active.'
                                 }
 			}
       		}
@@ -138,6 +139,7 @@ pipeline {
 					echo 'Prod network is being provisioned. This can take ~3 mins.'
 					echo 'Waiting for systems te become active...'
 					sleep( time: 180 )
+					echo 'Done. Systems active.'
                                 }
 			}
       		}
