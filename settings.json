@@ -5,10 +5,28 @@
 		"serverip"	: "10.204.11.142",
 		"serverport"	: "80",
 		"projecturi"	: "v2/projects",
+		"templatesuri"	: "v2/templates",
 		"nodescheck"	: "nodes",
 		"nodesstarturi"	: "start",
 		"nodesstopuri"	: "stop",
-		"prot"		: "http://"
+		"prot"		: "http://",
+		"newprojectjson": { 
+				    "name" : "SONiC_Dev_Fabric",
+				    "auto_open" : true,
+				    "posshift"  : 100,
+				    "templates" : {
+				    	"leaf"	: { 
+							"name"  : "Enterprise SONiC 3.5.2", 
+							"count" : 4,
+							"pos"   : { "x" : 12, "y" : 42 }
+					},
+					"spine" : {
+							"name"  : "Enterprise SONiC 3.5.2",
+							"count" : 2,
+							"pos"   : { "x" : 112, "y" : -200 }
+					}
+				    }
+		}
 	},
 	"awx"	: {
 		"serverip"	: "10.204.11.144",
