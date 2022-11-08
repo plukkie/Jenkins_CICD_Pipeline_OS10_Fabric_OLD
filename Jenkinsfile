@@ -30,7 +30,7 @@ pipeline {
     	stage('Stage Dev: Provision GNS3 Dev network') {
 		
 		environment {
-			LS = "${sh(script:'python3 -u startcicd.py startgns3 teststage | grep "proceed"', returnStdout: true).trim()}"
+			LS = "${sh(script:'python3 -u startcicd.py startgns3 devstage | grep "proceed"', returnStdout: true).trim()}"
     		}
       		
 		steps {
@@ -44,7 +44,7 @@ pipeline {
 				else {
 					//GNS3 API call to start Network has just been done by startcicd.py script
 					echo 'Dev network is being provisioned. This can take ~3 mins.'
-        				//sh 'python3 -u startcicd.py startgns3 teststage'
+        				//sh 'python3 -u startcicd.py startgns3 devstage'
 					echo 'Waiting for systems te become active...'
 					sleep( time: 180 )
 					echo 'Done. Systems active.'
@@ -58,7 +58,7 @@ pipeline {
 	stage("Stage Dev: Configure Dev network") {
 
 		environment {
-			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage configure | grep "proceed"', returnStdout: true).trim()}"
+			LS = "${sh(script:'python3 -u startcicd.py launchawx devstage configure | grep "proceed"', returnStdout: true).trim()}"
     		}
                             
 		steps {			
@@ -100,7 +100,7 @@ pipeline {
 	  
 	stage("Stage Dev: Run connectivity Tests") {
 		environment {
-			LS = "${sh(script:'python3 -u startcicd.py launchawx teststage test | grep "proceed"', returnStdout: true).trim()}"
+			LS = "${sh(script:'python3 -u startcicd.py launchawx devstage test | grep "proceed"', returnStdout: true).trim()}"
     		}
             
 		steps {
@@ -113,7 +113,7 @@ pipeline {
 					//This step is to spare on resources in the Compute platform (Dev & Prod run together gives problems) 
 					echo 'Will decommision Dev network to spare GNS3 resources...'
 					sleep( time: 2 )
-					sh 'python3 -u startcicd.py stopgns3 teststage' //Stop GNS3 project
+					sh 'python3 -u startcicd.py stopgns3 devstage' //Stop GNS3 project
             				echo 'Proceed to Stage Prod fase Provisioning.'
 					sleep( time: 3 )
         			} else {
