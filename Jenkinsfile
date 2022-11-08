@@ -37,12 +37,12 @@ pipeline {
 			script {
 				//echo "${env.LS}"
 				if (env.LS == 'proceed = True') {
-					echo 'Network already provisioned. Proceed to Stage Dev: Configure Dev network'
+					echo 'Network already provisioned. Proceed to Stage Dev: Configure Dev network.'
                                         sleep( time: 2 )
                                 }
 				else {
 					//GNS3 API call to start Network has just been done by startcicd.py script
-					echo 'Dev network is being provisioned. This can take ~3 mins'
+					echo 'Dev network is being provisioned. This can take ~3 mins.'
         				//sh 'python3 -u startcicd.py startgns3 teststage'
 					echo 'Waiting for systems te become active...'
 					sleep( time: 180 )
