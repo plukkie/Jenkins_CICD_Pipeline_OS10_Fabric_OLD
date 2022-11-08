@@ -73,7 +73,7 @@ pipeline {
 				}
 				if (env.LS.indexOf('relaunch') != -1) { //a relaunch was proposed, there were failures
 					relaunchuri = env.LS.substring(env.LS.lastIndexOf('=') + 1, env.LS.length())
-					println "${relaunchuri}"
+					//println "${relaunchuri}"
 					echo 'There are failures in Ansible playbook run. Retrying once on failed hosts...'
 					sleep( time: 2 )
 					env.RL = "${sh(script:"""python3 -u startcicd.py launchawx relaunch $relaunchuri | grep 'proceed'""", returnStdout: true).trim()}"
