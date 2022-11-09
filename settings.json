@@ -10,20 +10,25 @@
 		"nodesstarturi"	: "start",
 		"nodesstopuri"	: "stop",
 		"prot"		: "http://",
-		"newprojectjson": { 
+		"newprojectjson": {
 				    "name" : "SONiC_Dev_Fabric",
 				    "auto_open" : true,
+				    "auto_close": false
+				  },
+		"nodesdata"	: {
 				    "posshift"  : 100,
 				    "templates" : {
 				    	"leaf"	: { 
 							"name"  : "Enterprise SONiC 3.5.2", 
 							"count" : 4,
-							"pos"   : { "x" : 12, "y" : 42 }
+							"pos"   : { "x" : 12, "y" : 42 },
+							"mac" : { "base" : "cc:bb:aa:", "start" : 11 }
 					},
 					"spine" : {
 							"name"  : "Enterprise SONiC 3.5.2",
 							"count" : 2,
-							"pos"   : { "x" : 112, "y" : -200 }
+							"pos"   : { "x" : 112, "y" : -200 },
+							"mac" : { "base" : "cc:bb:aa:", "start" : 51 }
 					}
 				    }
 		}

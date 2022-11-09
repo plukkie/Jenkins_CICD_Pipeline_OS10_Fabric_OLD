@@ -290,16 +290,17 @@ def provisiongns3project (jsonobject):
     templateid = ""
     httpheaders = {} 
     s = settings['gns3']
-    npj = s['newprojectjson']
+    nd = s['nodesdata']
     baseurl = s['prot']+s['serverip']+':'+s['serverport']
     projecturi = s['projecturi']
     templatesuri = s['templatesuri']
-    templatedict = npj['templates']
+    templatedict = nd['templates']
     url = baseurl + '/' + templatesuri
     urltuple = ( url, httpheaders )
     templates = request ( urltuple, "get" )
     jsondict = json.loads(templates) #All templates found in GNS3 server
-    newdict = {}
+    newdict = { "nodes" : {} }
+    jsonadd = {}
 
     for template in templatedict: #Loop through desired templates from settingsfile
         reqname = templatedict[template]['name']
@@ -307,6 +308,9 @@ def provisiongns3project (jsonobject):
         pos     = templatedict[template]['pos']
         x = pos['x']
         y = pos['y']
+        basemac = templatedict[template]['mac']['base']
+        macstart = templatedict[template]['mac']['start']
+        macadd = ":00:01"
 
         print('Working on role: ' + template)
         print('Start position: ' + str(pos))
@@ -321,13 +325,32 @@ def provisiongns3project (jsonobject):
                 #print(url)
                 urltuple = ( url, httpheaders )
                 for loop in range (0, count): #Provision all devices for this role
-                    resp = request ( urltuple, "post", pos )
-                    time.sleep(1)
-                    x += npj['posshift'] #How much to shift next device icon
-                    pos = { "x" : x, "y" : y } 
-                    print(resp)
-    
+                    print('Creating node..')
+                    nodename = template + str(loop+1)
+                    jsonadd = { "x" : x, "y" : y }
+                    resp = json.loads(request ( urltuple, "post", jsonadd )) #create node in project
+                    nodeid = resp['node_id'] #Get nodeid for later usage
+                    #print(type(resp))
+                    newdict['nodes'][nodename] = { "nodeid" : nodeid } #Add nodeid to hostname for later usage
+                    time.sleep(0.5)
+                    x += nd['posshift'] #How much to shift next device icon
+
+    #Add hostname and mac address to created nodes
+    for obj in newdict['nodes']: #cycle to all nodes and request API call to change values in GNS3 project
+        nodeid = newdict['nodes'][obj]['nodeid']
+        name = obj
+
                 
+        """
+        macaddress = basemac + str(macstart) + macadd
+        jsonadd = { "x" : x, "y" : y, "properties" : { "mac_address" : macaddress }  }
+        #print(macaddress)
+        resp = request ( urltuple, "post", jsonadd )
+        time.sleep(0.5)
+        x += nd['posshift'] #How much to shift next device icon
+        macstart += 1
+        print(resp)
+        """
 
     
     #print(newdict)
@@ -353,12 +376,22 @@ if urltuple[0] == 'proceed = True': #GNS3 is already running, Report back to pro
 
 response = request ( urltuple, "post") #Request API POST request
 
-if 'creategns3project' in sys.argv[1:]: #Create new project in GNS3
-    if 'already exists' in response:
+if 'creategns3project' in sys.argv[1:]: #Add nodes to project in GNS3
+    if 'already exists' in response: #project was already created
         print(json.loads(response)['message'])
-        #sys.exit()
+        resp = json.loads(request ( urltuple, "get" )) #Query project to find ID
+        #print(resp)
+        #print(urltuple)
+        for obj in resp:
+            if obj['name'] == urltuple[3]['name']:
+                print('Project ID : ' + obj['project_id'])
+                response = json.dumps(obj)
+    else:
+        print('Project ' + response['project_id'] + ' created.')
 
+    time.sleep(1)
     result = provisiongns3project(json.loads(response))
+
 
 if 'gns' in urltuple[2]['runtype'] and 'start' in urltuple[0]:
     print('proceed = Wait') #used by jenkins
