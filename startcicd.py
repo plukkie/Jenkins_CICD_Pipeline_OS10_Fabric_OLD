@@ -189,7 +189,14 @@ def request ( url, reqtype, jsondata={} ):
         #print(url[0])
         #print(url[1])
         r = requests.post ( url[0], headers=url[1], json=jsondata )
-    elif reqtype == 'get': r = requests.get ( url[0], headers=url[1], json=jsondata )
+    elif reqtype == 'get':
+        r = requests.get ( url[0], headers=url[1], json=jsondata )
+    elif reqtype == 'put':
+        #print(url[0])
+        #print(url[1])
+        #print(jsondata)
+        r = requests.put ( url[0], headers=url[1], json=jsondata )
+    
     obj = r.content.decode('utf-8') #from bytes to dict
     #print(obj)
     
@@ -294,7 +301,7 @@ def provisiongns3project (jsonobject):
     baseurl = s['prot']+s['serverip']+':'+s['serverport']
     projecturi = s['projecturi']
     templatesuri = s['templatesuri']
-    templatedict = nd['templates']
+    templatedict = nd['templates'] #Data for the Network fabric roles
     url = baseurl + '/' + templatesuri
     urltuple = ( url, httpheaders )
     templates = request ( urltuple, "get" )
@@ -310,7 +317,7 @@ def provisiongns3project (jsonobject):
         y = pos['y']
         basemac = templatedict[template]['mac']['base']
         macstart = templatedict[template]['mac']['start']
-        macadd = ":00:01"
+        interlinks = templatedict[template]['interlinks']
 
         print('Working on role: ' + template)
         print('Start position: ' + str(pos))
@@ -318,42 +325,77 @@ def provisiongns3project (jsonobject):
 
         for tn in jsondict: #Loop through available templates in GNS3 and find id
             if tn['name'] == reqname: #Found template matching desired role (i.e. leaf, spine..)  
-                tid = tn['template_id']
+                tid = tn['template_id'] #VNF Template ID from GNS3
                 print('Found template id ' + tid + ' for name ' + reqname)
                 newdict[template] = { "name" : reqname, "count" : count, "tid" : tid, "pos" : pos } #Build new key/value dict
                 url = baseurl + '/' + projecturi + '/' + projectid + '/templates/' + tid
                 #print(url)
                 urltuple = ( url, httpheaders )
+                port = interlinks['port']
                 for loop in range (0, count): #Provision all devices for this role
-                    print('Creating node..')
+                    adapter = interlinks['1st_adapter_number']
                     nodename = template + str(loop+1)
+                    print('Creating node ' + nodename + '...')
                     jsonadd = { "x" : x, "y" : y }
                     resp = json.loads(request ( urltuple, "post", jsonadd )) #create node in project
                     nodeid = resp['node_id'] #Get nodeid for later usage
                     #print(type(resp))
-                    newdict['nodes'][nodename] = { "nodeid" : nodeid } #Add nodeid to hostname for later usage
                     time.sleep(0.5)
                     x += nd['posshift'] #How much to shift next device icon
 
+                    #Build JSON data to build links
+                    il = interlinks['linkcount'] #How many interlinks per node
+                    ports = { }
+                    adapterstep = interlinks['adapterstep']
+                    for link in range(0, il): #Add for total nr of links needed the port details
+                        linknr = link+1 #Start @1
+                        ports[linknr] = { "adapter_number" : adapter, "port" : port }
+                        adapter += adapterstep #Next port
+                    
+                    newdict['nodes'][nodename] = { "nodeid" : nodeid, "interlinks" : ports } #Add nodeid & ports to hostname for later usage
+
+                    
     #Add hostname and mac address to created nodes
+    url = baseurl + '/' + projecturi + '/' + projectid
     for obj in newdict['nodes']: #cycle to all nodes and request API call to change values in GNS3 project
         nodeid = newdict['nodes'][obj]['nodeid']
-        name = obj
-
-                
-        """
+        nodename = obj
+        macadd = ":00:01"
+        nodeurl = url + '/' + 'nodes/' + nodeid
         macaddress = basemac + str(macstart) + macadd
-        jsonadd = { "x" : x, "y" : y, "properties" : { "mac_address" : macaddress }  }
-        #print(macaddress)
-        resp = request ( urltuple, "post", jsonadd )
+        jsonadd = { "name" : nodename, "properties" : { "mac_address" : macaddress }  }
+        urltuple = ( nodeurl, httpheaders )
+        resp = request ( urltuple, "put", jsonadd ) #Update node config
         time.sleep(0.5)
-        x += nd['posshift'] #How much to shift next device icon
         macstart += 1
-        print(resp)
-        """
 
     
+    #Add links to nodes
+    linkurl = url + '/links' #Url to create links
+
+    for nodename in newdict['nodes']:
+        obj =  newdict['nodes'][nodename]
+        if 'leaf' in nodename:
+            nodeid = obj['nodeid']
+            linkcnt = len(obj['interlinks'])
+
+            for link in range (linkcnt):
+                linknr = link+1
+                adapter = obj['interlinks'][linknr]['adapter_number']
+                port = obj['interlinks'][linknr]['port']
+                spine = 'spine'+str(linknr)
+                linkpeerid = newdict['nodes'][spine]['nodeid']
+                linkpeerport = newdict['nodes'][spine]['interlinks']
+
+
+
+
+            
+            
+
+
     #print(newdict)
+                
 
             
 
