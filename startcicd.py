@@ -302,6 +302,8 @@ def provisiongns3project (jsonobject):
     projecturi = s['projecturi']
     templatesuri = s['templatesuri']
     templatedict = nd['templates'] #Data for the Network fabric roles
+    leafcount = templatedict['leaf']['count']
+    spinecount = templatedict['spine']['count']
     url = baseurl + '/' + templatesuri
     urltuple = ( url, httpheaders )
     templates = request ( urltuple, "get" )
@@ -311,54 +313,87 @@ def provisiongns3project (jsonobject):
 
     for template in templatedict: #Loop through desired templates from settingsfile
         reqname = templatedict[template]['name']
-        count   = templatedict[template]['count']
+        
+        if template == 'cloud':
+            count = leafcount + spinecount #Number of clouds to create
+            print('Will create ' + str(count) + ' clouds for oob management ports of switches..')
+            time.sleep(1)
+            cdict = templatedict[template]
+            pos = cdict['pos']
+            cid = { "compute_id" : "local", "x" : pos['x'], "y" : pos['y'] }
+            for tn in jsondict: #Loop through available templates in GNS3 and find id
+                if tn['name'] == reqname: #Found template matching desired cloud role
+                    tid = tn['template_id'] #VNF Template ID from GNS3
+                    print('Found template id ' + tid + ' for name ' + reqname)
+                    newdict[template] = { "name" : reqname, "count" : count,
+                                          "tid" : tid, "pos" : pos,
+                                          "port" : cdict['port'] } #Build new key/value dict
+
+                    url = baseurl + '/' + projecturi + '/' + projectid + '/templates/' + tid
+                    urltuple = ( url, httpheaders )
+                    print(url)
+                    resp = json.loads(request ( urltuple, "post", cid )) #create node in project
+                    #nodeid = resp['node_id'] #Get nodeid for later usage
+                    print(resp)
+            
+
+
+
+        else: count = templatedict[template]['count'] #Number of type (spine or leafs)
+        
         pos     = templatedict[template]['pos']
         x = pos['x']
         y = pos['y']
-        basemac = templatedict[template]['mac']['base']
-        macstart = templatedict[template]['mac']['start']
-        interlinks = templatedict[template]['interlinks']
-        il = interlinks['linkcount'] #How many interlinks used for a role (i.e on leaf or spine)
 
-        print('Working on role: ' + template)
-        print('Start position: ' + str(pos))
-        print('provision ' + str(count) + ' elements.')
+        if template == 'leaf' or template == 'spine':
+            basemac = templatedict[template]['mac']['base']
+            macstart = templatedict[template]['mac']['start']
+            interlinks = templatedict[template]['interlinks']
 
-        for tn in jsondict: #Loop through available templates in GNS3 and find id
-            if tn['name'] == reqname: #Found template matching desired role (i.e. leaf, spine..)  
-                tid = tn['template_id'] #VNF Template ID from GNS3
-                print('Found template id ' + tid + ' for name ' + reqname)
-                newdict[template] = { "name" : reqname, "count" : count, "tid" : tid, "pos" : pos } #Build new key/value dict
-                url = baseurl + '/' + projecturi + '/' + projectid + '/templates/' + tid
-                #print(url)
-                urltuple = ( url, httpheaders )
-                adapterstep = interlinks['adapterstep'] #Next adapter step
-                portstep = interlinks['portstep'] #Next port step
+            if template == 'leaf': il = spinecount #How many interlinks on leaf
+            elif template == 'spine': il = leafcount #How many interlinks on spine
+        
+            print('Working on role: ' + template)
+            print('Start position: ' + str(pos))
+            print('provision ' + str(count) + ' elements.')
+
+            for tn in jsondict: #Loop through available templates in GNS3 and find id
+ 
+                if tn['name'] == reqname: #Found template matching desired role (i.e. leaf, spine..)  
+                    tid = tn['template_id'] #VNF Template ID from GNS3
+                    print('Found template id ' + tid + ' for name ' + reqname)
+                    newdict[template] = { "name" : reqname, "count" : count, "tid" : tid, "pos" : pos } #Build new key/value dict
+                    url = baseurl + '/' + projecturi + '/' + projectid + '/templates/' + tid
+                    #print(url)
+                    urltuple = ( url, httpheaders )
+                    adapterstep = interlinks['adapterstep'] #Next adapter step
+                    portstep = interlinks['portstep'] #Next port step
                 
-                for loop in range (0, count): #Provision all devices for this role
-                    adapter = interlinks['1st_adapter_number'] #First adapter
-                    port = interlinks['port'] #First port
-                    nodename = template + str(loop+1) #Which node we are working on
-                    print('Creating node ' + nodename + '...')
-                    jsonadd = { "x" : x, "y" : y } #Position of the node on GNS raster
-                    resp = json.loads(request ( urltuple, "post", jsonadd )) #create node in project
-                    nodeid = resp['node_id'] #Get nodeid for later usage
-                    #print(type(resp))
-                    time.sleep(0.5)
-                    x += nd['posshift'] #How much to shift position for next device icon
+                    for loop in range (0, count): #Provision all devices for this role
+                        adapter = interlinks['1st_adapter_number'] #First adapter
+                        mgtport = templatedict[template]['mgtport']
+                        port = interlinks['port'] #First port
+                        nodename = template + str(loop+1) #Which node we are working on
+                        print('Creating node ' + nodename + '...')
+                        jsonadd = { "x" : x, "y" : y } #Position of the node on GNS raster
+                        resp = json.loads(request ( urltuple, "post", jsonadd )) #create node in project
+                        nodeid = resp['node_id'] #Get nodeid for later usage
+                        #print(type(resp))
+                        time.sleep(0.5)
+                        x += nd['posshift'] #How much to shift position for next device icon
 
-                    #Build JSON data to build links for later usage
-                    ports = { }
-                    for link in range(0, il): #Add for total nr of links needed the port details
-                        linknr = link+1 #Start @1
-                        ports[str(linknr)] = { "adapter_number" : adapter, "port" : port }
-                        adapter += adapterstep #Next adapter
-                        port += portstep #Next port
+                        #Build JSON data to build links for later usage
+                        ports = { }
+                        for link in range(0, il): #Add for total nr of links needed the port details
+                            linknr = link+1 #Start @1
+                            ports[str(linknr)] = { "adapter_number" : adapter, "port" : port }
+                            adapter += adapterstep #Next adapter
+                            port += portstep #Next port
                     
-                    #print(nodename)
-                    #print(ports)
+                        #print(nodename)
+                        #print(ports)
                     
-                    newdict['nodes'][nodename] = { "nodeid" : nodeid, "interlinks" : ports } #Add nodeid & ports to hostname for later usage
+                        newdict['nodes'][nodename] = { "nodeid" : nodeid, "interlinks" : ports, "mgtport" : mgtport } #Add nodeid & ports to hostname for later usage
 
                     
     #Add hostname and mac address to created nodes
