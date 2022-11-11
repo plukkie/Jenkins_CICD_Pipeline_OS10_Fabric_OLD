@@ -23,15 +23,15 @@
 							"count" : 4,
 							"pos"   : { "x" : 12, "y" : 42 },
 							"mac" 	: { "base" : "cc:bb:aa:", "start" : 11 },
-							"vlti"	: { "count" : 2, "1st_adapter_number" : 1, "port" : 0 },
-							"interlinks" : { "1st_adapter_number" : 1, "port" : 0, "adapterstep" : 3, "linkcount" : 2 }
+							"vlti"	: { "count" : 2, "1st_adapter_number" : 1, "port" : 1 },
+							"interlinks" : { "1st_adapter_number" : 5, "adapterstep" : 1, "port" : 0, "portstep" : 0, "linkcount" : 2 }
 					},
 					"spine" : {
 							"name"  : "Enterprise SONiC 3.5.2",
 							"count" : 2,
 							"pos"   : { "x" : 112, "y" : -200 },
 							"mac" 	: { "base" : "cc:bb:aa:", "start" : 51 },
-							"interlinks" : { "1st_adapter_number" : 1, "port" : 0, "adapterstep" : 1, "linkcount" : 4 }
+							"interlinks" : { "1st_adapter_number" : 1, "adapterstep" : 1, "port" : 0, "portstep" : 0, "linkcount" : 4 }
 					}
 				    }
 		}

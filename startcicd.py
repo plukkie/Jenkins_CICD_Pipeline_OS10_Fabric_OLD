@@ -318,10 +318,11 @@ def provisiongns3project (jsonobject):
         basemac = templatedict[template]['mac']['base']
         macstart = templatedict[template]['mac']['start']
         interlinks = templatedict[template]['interlinks']
+        il = interlinks['linkcount'] #How many interlinks used for a role (i.e on leaf or spine)
 
         print('Working on role: ' + template)
         print('Start position: ' + str(pos))
-        print('provision ' + str(count) + ' amounts.')
+        print('provision ' + str(count) + ' elements.')
 
         for tn in jsondict: #Loop through available templates in GNS3 and find id
             if tn['name'] == reqname: #Found template matching desired role (i.e. leaf, spine..)  
@@ -331,26 +332,31 @@ def provisiongns3project (jsonobject):
                 url = baseurl + '/' + projecturi + '/' + projectid + '/templates/' + tid
                 #print(url)
                 urltuple = ( url, httpheaders )
-                port = interlinks['port']
+                adapterstep = interlinks['adapterstep'] #Next adapter step
+                portstep = interlinks['portstep'] #Next port step
+                
                 for loop in range (0, count): #Provision all devices for this role
-                    adapter = interlinks['1st_adapter_number']
-                    nodename = template + str(loop+1)
+                    adapter = interlinks['1st_adapter_number'] #First adapter
+                    port = interlinks['port'] #First port
+                    nodename = template + str(loop+1) #Which node we are working on
                     print('Creating node ' + nodename + '...')
-                    jsonadd = { "x" : x, "y" : y }
+                    jsonadd = { "x" : x, "y" : y } #Position of the node on GNS raster
                     resp = json.loads(request ( urltuple, "post", jsonadd )) #create node in project
                     nodeid = resp['node_id'] #Get nodeid for later usage
                     #print(type(resp))
                     time.sleep(0.5)
-                    x += nd['posshift'] #How much to shift next device icon
+                    x += nd['posshift'] #How much to shift position for next device icon
 
-                    #Build JSON data to build links
-                    il = interlinks['linkcount'] #How many interlinks per node
+                    #Build JSON data to build links for later usage
                     ports = { }
-                    adapterstep = interlinks['adapterstep']
                     for link in range(0, il): #Add for total nr of links needed the port details
                         linknr = link+1 #Start @1
-                        ports[linknr] = { "adapter_number" : adapter, "port" : port }
-                        adapter += adapterstep #Next port
+                        ports[str(linknr)] = { "adapter_number" : adapter, "port" : port }
+                        adapter += adapterstep #Next adapter
+                        port += portstep #Next port
+                    
+                    #print(nodename)
+                    #print(ports)
                     
                     newdict['nodes'][nodename] = { "nodeid" : nodeid, "interlinks" : ports } #Add nodeid & ports to hostname for later usage
 
@@ -369,28 +375,44 @@ def provisiongns3project (jsonobject):
         time.sleep(0.5)
         macstart += 1
 
-    
+   
     #Add links to nodes
     linkurl = url + '/links' #Url to create links
+    
+    for nodename in newdict['nodes']: #Cycle through list wih node names (leaf1, leaf2, spine1, spine2, etc)
+        obj =  newdict['nodes'][nodename] #This is dict of node with links nr, ports, nodeid
+        
+        if 'leaf' in nodename: #When found a leaf
+            leafnr = nodename.lstrip('leaf') #What is the leaf nr
+            mynodeid = obj['nodeid']
+            linkcnt = len(obj['interlinks']) #How many interlinks on the leaf
 
-    for nodename in newdict['nodes']:
-        obj =  newdict['nodes'][nodename]
-        if 'leaf' in nodename:
-            nodeid = obj['nodeid']
-            linkcnt = len(obj['interlinks'])
+            for link in range (linkcnt): #Loop through all links for this node
+                mylinkarray = [] #Array with the json data to create a link
+                linknr = link+1 #Start count at 1 (these numbers are in the dict)
+                myadapter = obj['interlinks'][str(linknr)]['adapter_number']
+                myport = obj['interlinks'][str(linknr)]['port']
+                spine = 'spine'+str(linknr) #Which spine are we connected
+                linkpeerid = newdict['nodes'][spine]['nodeid'] #Id of spine
+                linkpeeradapter = newdict['nodes'][spine]['interlinks'][leafnr]['adapter_number']
+                linkpeerport = newdict['nodes'][spine]['interlinks'][leafnr]['port']
 
-            for link in range (linkcnt):
-                linknr = link+1
-                adapter = obj['interlinks'][linknr]['adapter_number']
-                port = obj['interlinks'][linknr]['port']
-                spine = 'spine'+str(linknr)
-                linkpeerid = newdict['nodes'][spine]['nodeid']
-                linkpeerport = newdict['nodes'][spine]['interlinks']
+                #Add to array with two json objects for one link
+                cnt = 0
+                for cnt in range(2):
+                    if cnt == 1: #Add my side of link
+                        linkobj = { "node_id" : mynodeid, "adapter_number" : myadapter, "port_number" : myport }
+                    else: #Add peer side of link
+                        linkobj = { "node_id" : linkpeerid, "adapter_number" : linkpeeradapter, "port_number" : linkpeerport }
 
-
-
-
-            
+                    mylinkarray.append(linkobj) #create array with to JSON objects, is for 1 link
+                    
+                jsonadd = { "nodes" : mylinkarray } #This is json for the api call to create a link
+                urltuple = ( linkurl, httpheaders )
+                print('Create link between ' + nodename + ' and ' + spine)
+                resp = request ( urltuple, "post", jsonadd ) #create link
+                time.sleep(0.5)
+                
             
 
 
