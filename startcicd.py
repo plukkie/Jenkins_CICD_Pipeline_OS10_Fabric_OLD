@@ -350,8 +350,6 @@ def provisiongns3project (jsonobject):
                     
                     #print(newdict['clouds'])
 
-
-
         else: count = templatedict[template]['count'] #Number of type (spine or leafs)
         
         pos     = templatedict[template]['pos']
@@ -362,6 +360,7 @@ def provisiongns3project (jsonobject):
             basemac = templatedict[template]['mac']['base']
             macstart = templatedict[template]['mac']['start']
             interlinks = templatedict[template]['interlinks']
+            vlti = templatedict[template]['vlti']
 
             if template == 'leaf': il = spinecount #How many interlinks on leaf
             elif template == 'spine': il = leafcount #How many interlinks on spine
@@ -383,6 +382,7 @@ def provisiongns3project (jsonobject):
                     portstep = interlinks['portstep'] #Next port step
                 
                     for loop in range (0, count): #Provision all devices for this role
+
                         switchnr += 1
                         adapter = interlinks['1st_adapter_number'] #First adapter
                         mgtport = templatedict[template]['mgtport']
@@ -398,20 +398,39 @@ def provisiongns3project (jsonobject):
 
                         #Build JSON data to build links for later usage
                         ports = { }
+
                         for link in range(0, il): #Add for total nr of links needed the port details
                             linknr = link+1 #Start @1
                             ports[str(linknr)] = { "adapter_number" : adapter, "port" : port }
                             adapter += adapterstep #Next adapter
                             port += portstep #Next port
                     
+                        vltarray = []
+                        jsonadd = {}
+                        if vlti['count'] > 0:
+                            vltlinks = vlti['count']
+                            vltadapter = vlti['1st_adapter_number']
+                            vltport = vlti['port'] 
+                            adapterstep = vlti['adapterstep']
+                            portstep = vlti['portstep']
+                            for vltlink in range(0, vltlinks): #Add for total nr of links needed the port details
+                                jsonadd = { "node_id" : nodeid, "adapter_number" : vltadapter, "port_number" : vltport } 
+                                vltarray.append(jsonadd)
+                                vltadapter += adapterstep
+                                vltport += portstep
+
                         #print(nodename)
                         #print(ports)
                     
-                        newdict['nodes'][nodename] = { "nr" : str(switchnr), "nodeid" : nodeid, "interlinks" : ports, "mgtport" : mgtport } #Add nodeid & ports to hostname for later usage
+                        newdict['nodes'][nodename] = {  "vlt" : vltarray,
+                                                        "nr" : str(switchnr),
+                                                        "nodeid" : nodeid,
+                                                        "interlinks" : ports,
+                                                        "mgtport" : mgtport } #Add nodeid & ports to hostname for later usage
 
 
-                    
     #Add hostname and mac address to created nodes
+    print('Adding custom mac-address to Nodes...')
     url = baseurl + '/' + projecturi + '/' + projectid
     for obj in newdict['nodes']: #cycle to all nodes and request API call to change values in GNS3 project
         nodeid = newdict['nodes'][obj]['nodeid']
@@ -464,6 +483,34 @@ def provisiongns3project (jsonobject):
                 print('Create link between ' + nodename + ' and ' + spine)
                 resp = request ( urltuple, "post", jsonadd ) #create link
                 time.sleep(0.5)
+
+        vltlinks = len(obj['vlt'])
+        if vltlinks != 0: #Need to add vlt links
+            switchnr = int(obj['nr'])
+            peerswitchnr = switchnr+1
+            peerswitch = ""
+            peervltlinkarray = []
+            for switch in newdict['nodes']:
+                nr = int(newdict['nodes'][switch]['nr'])
+                if nr == peerswitchnr: #Found vlt partnerswitch
+                    peervltlinkarray = newdict['nodes'][switch]['vlt']
+                    
+            mylinkarray = []
+            if (switchnr % 2) != 0: #Odd switchnr
+                for cnt in range(vltlinks): #Loop through all vlt links
+                    mylinkarray.append(obj['vlt'][cnt])
+                    mylinkarray.append(peervltlinkarray[cnt])
+                    jsonadd = { "nodes" : mylinkarray }
+                    #print(mylinkarray)
+                    urltuple = ( linkurl, httpheaders )
+                    print('Create VLTi link between ' + nodename + ' and ' + peerswitch)
+                    resp = request ( urltuple, "post", jsonadd ) #create link
+                    #print(resp)
+                    time.sleep(0.5)
+
+                    mylinkarray = []
+                    #linkobj = { "node_id" : mynodeid, "adapter_number" : myadapter, "port_number" : myport }
+                    #print(nodename)
 
     #print(newdict)
     for cloud in newdict['clouds']: #Cycle through clouds for mgt connections
