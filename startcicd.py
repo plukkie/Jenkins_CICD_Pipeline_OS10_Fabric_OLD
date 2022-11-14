@@ -308,34 +308,47 @@ def provisiongns3project (jsonobject):
     urltuple = ( url, httpheaders )
     templates = request ( urltuple, "get" )
     jsondict = json.loads(templates) #All templates found in GNS3 server
-    newdict = { "nodes" : {} }
+    newdict = { "nodes" : {}, "clouds" : {} }
     jsonadd = {}
+    switchnr = 0 #counter for all switches
 
     for template in templatedict: #Loop through desired templates from settingsfile
         reqname = templatedict[template]['name']
         
-        if template == 'cloud':
-            count = leafcount + spinecount #Number of clouds to create
+        if template == 'cloud': #Build Nodetype cloud
+            cdict = templatedict[template] #cloud Key/values
+            if cdict['count'] == "": count = leafcount + spinecount #Number of clouds to create
+            else: count = int(cdict['count']) #How many clouds to create
             print('Will create ' + str(count) + ' clouds for oob management ports of switches..')
             time.sleep(1)
-            cdict = templatedict[template]
+
             pos = cdict['pos']
+            port = cdict['port']
             cid = { "compute_id" : "local", "x" : pos['x'], "y" : pos['y'] }
             for tn in jsondict: #Loop through available templates in GNS3 and find id
                 if tn['name'] == reqname: #Found template matching desired cloud role
                     tid = tn['template_id'] #VNF Template ID from GNS3
                     print('Found template id ' + tid + ' for name ' + reqname)
+
+                    #Build json dict to create clouds
                     newdict[template] = { "name" : reqname, "count" : count,
                                           "tid" : tid, "pos" : pos,
-                                          "port" : cdict['port'] } #Build new key/value dict
+                                          "port" : cdict['port'] }
 
                     url = baseurl + '/' + projecturi + '/' + projectid + '/templates/' + tid
                     urltuple = ( url, httpheaders )
-                    print(url)
-                    resp = json.loads(request ( urltuple, "post", cid )) #create node in project
-                    #nodeid = resp['node_id'] #Get nodeid for later usage
-                    print(resp)
-            
+                    #print(url)
+                    for cnt in range(count): #Build x amount of clouds
+                        print('Creating cloud ' + str(cnt+1) + '...') 
+                        resp = json.loads(request ( urltuple, "post", cid )) #create node in project
+                        #nodeid = resp['node_id'] #Get nodeid for later usage
+                        #print(resp)
+                        #print()
+                        newdict['clouds'][str(cnt+1)] = { "name" : resp['name'], "node_id" : resp["node_id"], "port" : port }
+                        time.sleep(0.5)
+
+                    
+                    #print(newdict['clouds'])
 
 
 
@@ -345,7 +358,7 @@ def provisiongns3project (jsonobject):
         x = pos['x']
         y = pos['y']
 
-        if template == 'leaf' or template == 'spine':
+        if template == 'leaf' or template == 'spine': #Leaf or spine switch
             basemac = templatedict[template]['mac']['base']
             macstart = templatedict[template]['mac']['start']
             interlinks = templatedict[template]['interlinks']
@@ -370,6 +383,7 @@ def provisiongns3project (jsonobject):
                     portstep = interlinks['portstep'] #Next port step
                 
                     for loop in range (0, count): #Provision all devices for this role
+                        switchnr += 1
                         adapter = interlinks['1st_adapter_number'] #First adapter
                         mgtport = templatedict[template]['mgtport']
                         port = interlinks['port'] #First port
@@ -393,7 +407,8 @@ def provisiongns3project (jsonobject):
                         #print(nodename)
                         #print(ports)
                     
-                        newdict['nodes'][nodename] = { "nodeid" : nodeid, "interlinks" : ports, "mgtport" : mgtport } #Add nodeid & ports to hostname for later usage
+                        newdict['nodes'][nodename] = { "nr" : str(switchnr), "nodeid" : nodeid, "interlinks" : ports, "mgtport" : mgtport } #Add nodeid & ports to hostname for later usage
+
 
                     
     #Add hostname and mac address to created nodes
@@ -413,6 +428,8 @@ def provisiongns3project (jsonobject):
    
     #Add links to nodes
     linkurl = url + '/links' #Url to create links
+    print('Creating links between elements...')
+    time.sleep(0.5)
     
     for nodename in newdict['nodes']: #Cycle through list wih node names (leaf1, leaf2, spine1, spine2, etc)
         obj =  newdict['nodes'][nodename] #This is dict of node with links nr, ports, nodeid
@@ -447,6 +464,34 @@ def provisiongns3project (jsonobject):
                 print('Create link between ' + nodename + ' and ' + spine)
                 resp = request ( urltuple, "post", jsonadd ) #create link
                 time.sleep(0.5)
+
+    #print(newdict)
+    for cloud in newdict['clouds']: #Cycle through clouds for mgt connections
+        clouddict = newdict['clouds'][cloud]
+        
+        for fabricrole in newdict['nodes']:
+            if 'leaf' in fabricrole or 'spine' in fabricrole:
+                dictobj = newdict['nodes'][fabricrole]
+                switchnr = dictobj['nr']
+                if str(cloud) == (str(switchnr)): #Found match to build link between cloud and switch
+                    mylinkarray = [] #Array with the json data to create a link
+                    myadapter = clouddict['port']['adapter_number']
+                    myport = clouddict['port']['port_number']
+                    myid = clouddict['node_id']
+                    linkpeeradapter = dictobj['mgtport']['adapter_number']
+                    linkpeerport = dictobj['mgtport']['port_number']
+                    peerid = dictobj['nodeid']
+                    
+                    jsonmyside = { "node_id" : myid, "adapter_number" : myadapter, "port_number" : myport }
+                    jsonpeerside = { "node_id" : peerid, "adapter_number" : linkpeeradapter, "port_number" : linkpeerport }
+
+                    jsonadd = { "nodes" : [ jsonmyside, jsonpeerside ] } #create array with to JSON objects, is for 1 link
+                    urltuple = ( linkurl, httpheaders )
+                    print('Create link between cloud' + str(cloud) + ' and ' + fabricrole)
+                    resp = request ( urltuple, "post", jsonadd ) #create link
+                    time.sleep(0.5)
+        
+        #print(newdict)
                 
             
 
