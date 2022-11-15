@@ -380,6 +380,7 @@ def provisiongns3project (jsonobject):
         if template == 'leaf' or template == 'spine': #Leaf or spine switch
             basemac = templatedict[template]['mac']['base']
             macstart = templatedict[template]['mac']['start']
+            macadd = ":00:01"
             interlinks = templatedict[template]['interlinks']
             vlti = templatedict[template]['vlti']
 
@@ -389,6 +390,7 @@ def provisiongns3project (jsonobject):
             print('Working on role: ' + template)
             print('Start position: ' + str(pos))
             print('provision ' + str(count) + ' elements.')
+            print('start mac: ' + str(macstart))
 
             for tn in jsondict: #Loop through available templates in GNS3 and find id
  
@@ -401,7 +403,7 @@ def provisiongns3project (jsonobject):
                     urltuple = ( url, httpheaders )
                     adapterstep = interlinks['adapterstep'] #Next adapter step
                     portstep = interlinks['portstep'] #Next port step
-                
+                    
                     for loop in range (0, count): #Provision all devices for this role
 
                         switchnr += 1
@@ -442,28 +444,31 @@ def provisiongns3project (jsonobject):
 
                         #print(nodename)
                         #print(ports)
-                    
+                        mac = basemac + str(macstart) + macadd
+
                         newdict['nodes'][nodename] = {  "vlt" : vltarray,
                                                         "nr" : str(switchnr),
                                                         "nodeid" : nodeid,
                                                         "interlinks" : ports,
-                                                        "mgtport" : mgtport } #Add nodeid & ports to hostname for later usage
+                                                        "mgtport" : mgtport, #Add nodeid & ports to hostname for later usage
+                                                        "mac" : mac }
+
+                        macstart += 1
 
 
     #Add hostname and mac address to created nodes
-    print('Adding custom mac-address to Nodes...')
+    print('Adding custom base mac-address & nodename to Nodes...')
     url = baseurl + '/' + projecturi + '/' + projectid
     for obj in newdict['nodes']: #cycle to all nodes and request API call to change values in GNS3 project
         nodeid = newdict['nodes'][obj]['nodeid']
         nodename = obj
-        macadd = ":00:01"
         nodeurl = url + '/' + 'nodes/' + nodeid
-        macaddress = basemac + str(macstart) + macadd
+        macaddress =  newdict['nodes'][obj]['mac'] 
         jsonadd = { "name" : nodename, "properties" : { "mac_address" : macaddress }  }
         urltuple = ( nodeurl, httpheaders )
+        print('nodename ' + nodename +', base mac-address ' + macaddress)
         resp = request ( urltuple, "put", jsonadd ) #Update node config
         time.sleep(0.5)
-        macstart += 1
 
    
     #Add links to nodes
@@ -509,7 +514,6 @@ def provisiongns3project (jsonobject):
         if vltlinks != 0: #Need to add vlt links
             switchnr = int(obj['nr'])
             peerswitchnr = switchnr+1
-            peerswitch = ""
             peervltlinkarray = []
             for switch in newdict['nodes']:
                 nr = int(newdict['nodes'][switch]['nr'])
@@ -524,7 +528,7 @@ def provisiongns3project (jsonobject):
                     jsonadd = { "nodes" : mylinkarray }
                     #print(mylinkarray)
                     urltuple = ( linkurl, httpheaders )
-                    print('Create VLTi link between ' + nodename + ' and ' + peerswitch)
+                    print('Create VLTi link between ' + nodename + ' and ' + str(peerswitchnr))
                     resp = request ( urltuple, "post", jsonadd ) #create link
                     #print(resp)
                     time.sleep(0.5)
@@ -636,7 +640,7 @@ def test_reachability ( addresslist):
     pingstats = {}
 
     for ip in hosts:
-        pingrespons = os.system("ping -c 2 " + ip)
+        pingrespons = os.system("ping -c3 -i10 " + ip)
 
         if pingrespons == 0:
             result = 'up'
@@ -711,7 +715,9 @@ if 'gns' in urltuple[2]['runtype'] and 'start' in urltuple[0]:
         print('proceed = Wait') #used by jenkins
     else:
         t1 = datetime.strptime((datetime.now()).strftime("%H:%M:%S"), "%H:%M:%S")
+        print()
         print('Trying to reach hosts with pings for ' + str(starttimeout) + ' secs.')
+        print()
         
         while True:
             t2 = datetime.strptime((datetime.now()).strftime("%H:%M:%S"), "%H:%M:%S")
@@ -724,6 +730,7 @@ if 'gns' in urltuple[2]['runtype'] and 'start' in urltuple[0]:
                 sys.exit()
 
             if result == 'up':
+                result = test_reachability ( inventory ) #Do one more time testing
                 print('proceed = True') #Used by Jenkins
                 sys.exit()
 
