@@ -22,8 +22,8 @@
 					"count" : 4,
 					"pos"   : { "x" : -50, "y" : 42 },
 					"mac" 	: { "base" : "cc:bb:aa:", "start" : 11 },
-					"vlti"	: { "count" : 2, "1st_adapter_number" : 1, "adapterstep" : 1,"port" : 0, "portstep" : 0 },
-					"interlinks" : { "1st_adapter_number" : 5, "adapterstep" : 1, "port" : 0, "portstep" : 0 },
+					"vlti"	: { "count" : 2, "1st_adapter_number" : 3, "adapterstep" : 4,"port" : 0, "portstep" : 0 },
+					"interlinks" : { "1st_adapter_number" : 1, "adapterstep" : 4, "port" : 0, "portstep" : 0 },
 					"mgtport" : { "adapter_number" : 0, "port_number" : 0 }
 				},
 				"spine" : {

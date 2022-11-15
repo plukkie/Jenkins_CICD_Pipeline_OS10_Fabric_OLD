@@ -508,6 +508,7 @@ def provisiongns3project (jsonobject):
                 urltuple = ( linkurl, httpheaders )
                 print('Create link between ' + nodename + ' and ' + spine)
                 resp = request ( urltuple, "post", jsonadd ) #create link
+                #print(resp)
                 time.sleep(0.5)
 
         vltlinks = len(obj['vlt'])
