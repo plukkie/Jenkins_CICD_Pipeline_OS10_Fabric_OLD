@@ -4,7 +4,10 @@ import json
 import requests
 import sys
 import time
-
+import tempfile
+import os
+from git.repo import Repo
+from datetime import datetime
 
 settingsfile    = 'settings.json'
 
@@ -34,21 +37,31 @@ def return_url ( settingsobject ):
     if 'startgns3' in a[1:] or 'stopgns3' in a[1:]: #It is a call to a GNS3 project
         toplevelkey = 'gns3'
         s = settingsobject[toplevelkey] #get gns3 keys from settings
-        url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']+"/"
+        url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']
+
         if 'devstage' in a[2:]: #dev/test stage is specified
-            url = url + s['teststageproject']
+            projectname = s['newprojectdevjson']['name']
         elif 'prodstage' in a[2:]: #prod stage is specified
-            url = url + s['prodstageproject']
+            projectname = s['newprojectprodjson']['name']
         else:
             print('No Stage specified. Please add "devstage" or "prodstage"')
             sys.exit()
+
+        urltuple = ( url, httpheaders )
+        resp = json.loads(request ( urltuple, 'get' )) #Get project id
+        for x in resp:
+            if x['name'] == projectname:
+                projectid = x['project_id']
+                print('Found project id ' + projectid + ' for project name ' + projectname)
+                time.sleep(1)
+                url = url + "/" + projectid
 
         if 'startgns3' in a[1:]:
             checkurl = url + '/' + s['nodescheck'] #construct gns3 api to check node status
             urltuple = ( checkurl, httpheaders )
             print('Check if nodes in GNS3 are already running...')
             resp = request ( urltuple, 'get' ) #Check status of all nodes in the project
-            print(resp)
+            #print(resp)
             if type(resp) == str: resp = json.loads(resp) #From str to json
             stopped = False #used to track if a gns3 node is stopped
             for item in resp: #find all nodes and their status
@@ -124,11 +137,17 @@ def return_url ( settingsobject ):
         toplevelkey = 'gns3'
         s = settingsobject[toplevelkey] #get gns3 keys from settings
         url = s['prot']+s['serverip']+":"+s['serverport']+"/"+s['projecturi']
-        jsonobj = s['newprojectjson'] 
- 
+        if 'devstage' in a[2:]: #dev/test stage specified
+            jsonobj = s['newprojectdevjson'] 
+        elif 'prodstage' in a[2:]: #prodstage specified
+            jsonobj = s['newprojectprodjson'] 
+        else:
+            print('No Stage specified. Please add "devstage" or "prodstage"')
+            sys.exit()
 
     else: #No cli arguments given
         print('\nusage : ' + sys.argv[0] + ' <option>\n')
+        print(' - creategns3project devstage/prodstage : will start GNS3 dev or prod project')
         print(' - startgns3 devstage/prodstage : will start GNS3 project')
         print(' - stopgns3 devstage/prodstage : will stop GNS3 project')
         print(' - launchawx devstage: will start job template for test env on Ansible tower')
@@ -201,6 +220,7 @@ def request ( url, reqtype, jsondata={} ):
     #print(obj)
     
     return obj
+
 
 
 def jobstatuschecker ( dataobject ):
@@ -282,6 +302,7 @@ def jobstatuschecker ( dataobject ):
     print()
 
     return proceed #returns the status of the job that was started
+
 
 
 def provisiongns3project (jsonobject):
@@ -538,24 +559,113 @@ def provisiongns3project (jsonobject):
                     resp = request ( urltuple, "post", jsonadd ) #create link
                     time.sleep(0.5)
         
-        #print(newdict)
-                
-            
-
-
     #print(newdict)
-                
+    return 'proceed = True'                
 
             
 
-    sys.exit()
 
 
-########################
+def get_ansible_inventory ( ):
+
+    """
+    This function requests the ansible inventory file from Github.
+    The ip-addresses and ansible hostnames are read from the file.
+    The result is returned.
+
+    output:
+    - array with hostname and ip
+    """
+    stringmatch = '_host='
+
+    gitrepourl = settings["externals"]["ansible_playbook_repo"]['url']
+    hostfile = settings["externals"]["ansible_playbook_repo"]['inventoryfile']
+
+    tempdir = tempfile.TemporaryDirectory()
+    clonerepo = Repo.clone_from ( gitrepourl, tempdir.name )
+    myrepo = tempdir.name
+    hostfilepath = myrepo + '/' + hostfile
+    obj = {}
+    if not os.path.isfile(hostfilepath):
+        print('Hostfile does not exist.')
+        print('Not able to build a list with IP addresses from an ansible inventory.')
+
+    else:
+        with open(hostfilepath) as f:
+            content = f.read().splitlines()
+
+        # Show the file contents line by line.
+        # We added the comma to print single newlines and not double newlines.
+        # This is because the lines contain the newline character '\n'.
+        leafcnt = 0
+        spinecnt = 0
+        obj = { "hosts" : {} }
+
+        for line in content:
+            if stringmatch in line.lower():
+                linearray = line.split()
+                hostname = linearray[0]
+                for item in linearray:
+                    if stringmatch in item:
+                        ip = item.split(stringmatch)[1]
+                        obj['hosts'][ip] = { "name" : hostname }
+                        break
+
+                if 'leaf' in hostname.lower():
+                    leafcnt += 1 
+                    obj['hosts'][ip]['type'] = 'leaf'
+                   
+                elif 'spine' in hostname.lower():
+                    spinecnt += 1
+                    obj['hosts'][ip]['type'] = 'spine'
+                else:
+                    print('Could not find fabric with leaf or spine names.')
+                    print('All ansible host IP addresses are returned.')
+                    obj[ip]['type'] = 'unknown'
+
+        obj['leafcnt'] = leafcnt
+        obj['spinecnt'] = spinecnt
+
+    return obj
+
+
+def test_reachability ( addresslist):
+   
+    hosts = addresslist['hosts']
+    result = 'down'
+    pingstats = {}
+
+    for ip in hosts:
+        pingrespons = os.system("ping -c 2 " + ip)
+
+        if pingrespons == 0:
+            result = 'up'
+            print (ip, 'is ' + result + '!')
+        else:
+            result = 'down'
+            print (ip, 'is ' + result + '!')
+
+        pingstats[ip] = result
+
+    for item in pingstats:
+        status = pingstats[item]
+        if status == 'down':
+            result = status
+            break
+        else:
+            result = status
+
+    return result
+
+
+
+######################## 
 ####  MAIN PROGRAM #####
 ########################
 
+
 settings = readsettings ( settingsfile ) #Read settings to JSON object
+
 
 # Request API call
 urltuple = return_url ( settings ) #Return required URL, headers if needed & other option data
@@ -570,6 +680,9 @@ response = request ( urltuple, "post") #Request API POST request
 if 'creategns3project' in sys.argv[1:]: #Add nodes to project in GNS3
     if 'already exists' in response: #project was already created
         print(json.loads(response)['message'])
+        print('If you want to rebuild, please delete the project from GNS3.')
+        print('Then restart.')
+        """
         resp = json.loads(request ( urltuple, "get" )) #Query project to find ID
         #print(resp)
         #print(urltuple)
@@ -577,15 +690,45 @@ if 'creategns3project' in sys.argv[1:]: #Add nodes to project in GNS3
             if obj['name'] == urltuple[3]['name']:
                 print('Project ID : ' + obj['project_id'])
                 response = json.dumps(obj)
+        """
+        print('proceed = True')
+        sys.exit()
     else:
-        print('Project ' + response['project_id'] + ' created.')
+        projectid = json.loads(response)['project_id']
+        print('Project ' + projectid + ' created.')
 
     time.sleep(1)
     result = provisiongns3project(json.loads(response))
+    print(result)
+    sys.exit()
 
 
 if 'gns' in urltuple[2]['runtype'] and 'start' in urltuple[0]:
-    print('proceed = Wait') #used by jenkins
+    inventory = get_ansible_inventory ()
+    starttimeout = settings['gns3']['starttimeout']
+
+    if inventory == '{}':
+        print('proceed = Wait') #used by jenkins
+    else:
+        t1 = datetime.strptime((datetime.now()).strftime("%H:%M:%S"), "%H:%M:%S")
+        print('Trying to reach hosts with pings for ' + str(starttimeout) + ' secs.')
+        
+        while True:
+            t2 = datetime.strptime((datetime.now()).strftime("%H:%M:%S"), "%H:%M:%S")
+            delta = t2 - t1
+            result = test_reachability ( inventory )
+
+            if delta.total_seconds() > starttimeout:
+                print('Reached timeout. Seems project is unreachable indefinately.')
+                print('proceed = False') #Used by Jenkins
+                sys.exit()
+
+            if result == 'up':
+                print('proceed = True') #Used by Jenkins
+                sys.exit()
+
+
+
 
 
 #If AWX project was launched, check its jobstatus till finished

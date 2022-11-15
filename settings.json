@@ -1,7 +1,5 @@
 {
 	"gns3"	: {
-		"teststageproject" : "383b63b2-094a-43e1-b3e6-ff0ae7c8d854",
-		"prodstageproject" : "685bcf1d-f92c-4dcf-a973-0455847f4f59",
 		"serverip"	: "10.204.11.142",
 		"serverport"	: "80",
 		"projecturi"	: "v2/projects",
@@ -10,38 +8,40 @@
 		"nodesstarturi"	: "start",
 		"nodesstopuri"	: "stop",
 		"prot"		: "http://",
-		"newprojectjson": {
+		"starttimeout"  : 600,
+		"newprojectdevjson": {
 				    "name" : "SONiC_Dev_Fabric",
 				    "auto_open" : true,
 				    "auto_close": false
 				  },
 		"nodesdata"	: {
-				    "posshift"  : 150,
-				    "templates" : {
-				    	"leaf"	: { 
-							"name"  : "Enterprise SONiC 3.5.2", 
-							"count" : 4,
-							"pos"   : { "x" : -50, "y" : 42 },
-							"mac" 	: { "base" : "cc:bb:aa:", "start" : 11 },
-							"vlti"	: { "count" : 2, "1st_adapter_number" : 1, "adapterstep" : 1,"port" : 0, "portstep" : 0 },
-							"interlinks" : { "1st_adapter_number" : 5, "adapterstep" : 1, "port" : 0, "portstep" : 0 },
-							"mgtport" : { "adapter_number" : 0, "port_number" : 0 }
-					},
-					"spine" : {
-							"name"  : "Enterprise SONiC 3.5.2",
-							"count" : 2,
-							"pos"   : { "x" : 100, "y" : -200 },
-							"mac" 	: { "base" : "cc:bb:aa:", "start" : 51 },
-							"vlti"	: { "count" : 0, "1st_adapter_number" : 8, "adapterstep" : 1,"port" : 0, "portstep" : 0 },
-							"interlinks" : { "1st_adapter_number" : 1, "adapterstep" : 1, "port" : 0, "portstep" : 0 },
-							"mgtport" : { "adapter_number" : 0, "port_number" : 0 }
-					},
-					"cloud" : {	"name"	: "Cloud",
-							"pos"   : { "x" : -500, "y" : -100 },
-							"port" : { "adapter_number" : 0, "port_number" : 0 },
-							"count" : ""
-					}
-				    }
+			"posshift"  : 150,
+			"templates" : {
+				"leaf"	: { 
+					"name"  : "Enterprise SONiC 3.5.2", 
+					"count" : 4,
+					"pos"   : { "x" : -50, "y" : 42 },
+					"mac" 	: { "base" : "cc:bb:aa:", "start" : 11 },
+					"vlti"	: { "count" : 2, "1st_adapter_number" : 1, "adapterstep" : 1,"port" : 0, "portstep" : 0 },
+					"interlinks" : { "1st_adapter_number" : 5, "adapterstep" : 1, "port" : 0, "portstep" : 0 },
+					"mgtport" : { "adapter_number" : 0, "port_number" : 0 }
+				},
+				"spine" : {
+					"name"  : "Enterprise SONiC 3.5.2",
+					"count" : 2,
+					"pos"   : { "x" : 100, "y" : -200 },
+					"mac" 	: { "base" : "cc:bb:aa:", "start" : 51 },
+					"vlti"	: { "count" : 0, "1st_adapter_number" : 8, "adapterstep" : 1,"port" : 0, "portstep" : 0 },
+					"interlinks" : { "1st_adapter_number" : 1, "adapterstep" : 1, "port" : 0, "portstep" : 0 },
+					"mgtport" : { "adapter_number" : 0, "port_number" : 0 }
+				},
+				"cloud" : {
+					"name"	: "Cloud",
+					"pos"   : { "x" : -500, "y" : -100 },
+					"port" : { "adapter_number" : 0, "port_number" : 0 },
+					"count" : ""
+				}
+			}
 		}
 	},
 	"awx"	: {
@@ -56,6 +56,10 @@
 		"prodstage_jobtemplate_name_deploy" : "Template Stage PROD OS10 EVPN Fabric fase CONFIG",
 		"launchsuffix"	: "launch",
 		"httpheaders"	: { "Authorization" : "Bearer Ey8BiQpWEhYD6X5UHWuWk6tACAIdbP" }
+	},
+	"externals" : {
+		"ansible_playbook_repo" : { "url" : "https://github.com/plukkie/FDC_Ansible_SONiC_EVPN_Fabric.git", "inventoryfile" : "hosts" }
+
 	}
 }
 
