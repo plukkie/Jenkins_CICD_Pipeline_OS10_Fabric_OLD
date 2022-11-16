@@ -325,20 +325,23 @@ def provisiongns3project (jsonobject):
     templatedict = nd['templates'] #Data for the Network fabric roles
     leafcount = templatedict['leaf']['count']
     spinecount = templatedict['spine']['count']
+    bordercount = templatedict['border']['count']
     url = baseurl + '/' + templatesuri
     urltuple = ( url, httpheaders )
     templates = request ( urltuple, "get" )
     jsondict = json.loads(templates) #All templates found in GNS3 server
     newdict = { "nodes" : {}, "clouds" : {} }
     jsonadd = {}
-    switchnr = 0 #counter for all switches
+    switchnr = 0 #counter for only leaf & spine switches
+    bswitchnr = 0
+
 
     for template in templatedict: #Loop through desired templates from settingsfile
         reqname = templatedict[template]['name']
         
         if template == 'cloud': #Build Nodetype cloud
             cdict = templatedict[template] #cloud Key/values
-            if cdict['count'] == "": count = leafcount + spinecount #Number of clouds to create
+            if cdict['count'] == "": count = leafcount + spinecount + bordercount #Number of clouds to create
             else: count = int(cdict['count']) #How many clouds to create
             print('Will create ' + str(count) + ' clouds for oob management ports of switches..')
             time.sleep(1)
@@ -369,23 +372,30 @@ def provisiongns3project (jsonobject):
                         time.sleep(0.5)
 
                     
-                    #print(newdict['clouds'])
+                   # print(newdict['clouds'])
 
-        else: count = templatedict[template]['count'] #Number of type (spine or leafs)
+        else:
+            count = templatedict[template]['count'] #Number of type (spine or leafs)
         
         pos     = templatedict[template]['pos']
         x = pos['x']
         y = pos['y']
 
-        if template == 'leaf' or template == 'spine': #Leaf or spine switch
+        if template == 'leaf' or template == 'spine' or template == 'border': #Leaf or spine switch
             basemac = templatedict[template]['mac']['base']
             macstart = templatedict[template]['mac']['start']
             macadd = ":00:01"
             interlinks = templatedict[template]['interlinks']
+            borderlinks = templatedict[template]['borderlinks']
             vlti = templatedict[template]['vlti']
 
-            if template == 'leaf': il = spinecount #How many interlinks on leaf
-            elif template == 'spine': il = leafcount #How many interlinks on spine
+            if template == 'leaf':
+                il = spinecount #How many interlinks on leaf
+                
+            elif template == 'spine':
+                il = leafcount #How many interlinks on spine
+            elif template == 'border':
+                il = 0
         
             print('Working on role: ' + template)
             print('Start position: ' + str(pos))
@@ -401,15 +411,14 @@ def provisiongns3project (jsonobject):
                     url = baseurl + '/' + projecturi + '/' + projectid + '/templates/' + tid
                     #print(url)
                     urltuple = ( url, httpheaders )
-                    adapterstep = interlinks['adapterstep'] #Next adapter step
-                    portstep = interlinks['portstep'] #Next port step
-                    
+                    #adapterstep = interlinks['adapterstep'] #Next adapter step
+                    #portstep = interlinks['portstep'] #Next port step
+
                     for loop in range (0, count): #Provision all devices for this role
 
-                        switchnr += 1
-                        adapter = interlinks['1st_adapter_number'] #First adapter
-                        mgtport = templatedict[template]['mgtport']
-                        port = interlinks['port'] #First port
+                        #if template == 'leaf' or template == 'spine':
+                        switchnr += 1 #Only raise switchnr for spines & leafs
+
                         nodename = template + str(loop+1) #Which node we are working on
                         print('Creating node ' + nodename + '...')
                         jsonadd = { "x" : x, "y" : y } #Position of the node on GNS raster
@@ -420,16 +429,56 @@ def provisiongns3project (jsonobject):
                         x += nd['posshift'] #How much to shift position for next device icon
 
                         #Build JSON data to build links for later usage
+                        mgtport = templatedict[template]['mgtport']
+                      
+                        if template == 'border':
+                            adapterstep = borderlinks['adapterstep'] #Next adapter step
+                            portstep = borderlinks['portstep'] #Next port step
+                            adapter = borderlinks['1st_adapter_number'] #First adapter
+                            port = borderlinks['port']
+                            bswitchnr += 1
+                        else:
+                            adapterstep = interlinks['adapterstep'] #Next adapter step
+                            portstep = interlinks['portstep'] #Next port step
+                            adapter = interlinks['1st_adapter_number'] #First adapter
+                            port = interlinks['port'] #First port
+                        
                         ports = { }
+                        bports = { }
 
-                        for link in range(0, il): #Add for total nr of links needed the port details
+
+                        for link in range(0, il): #Add for total nr of interlinks needed the port details
                             linknr = link+1 #Start @1
                             ports[str(linknr)] = { "adapter_number" : adapter, "port" : port }
                             adapter += adapterstep #Next adapter
                             port += portstep #Next port
-                    
+
+                        if template == 'border':
+                            linknr = 0
+                            for link in range(2): #Add for total nr of borderlinks needed the port details
+                                linknr = link+1 #Start @1
+                                bports[str(linknr)] = { "adapter_number" : adapter, "port" : port }
+                                adapter += adapterstep #Next adapter
+                                port += portstep #Next port
+                        
+                        
+                        if nodename == 'leaf1' or nodename == 'leaf2': #Only add borderlink details for leaf1 and leaf2
+                            adapterstep = borderlinks['adapterstep'] #Next adapter step
+                            portstep = borderlinks['portstep'] #Next port step
+                            adapter = borderlinks['1st_adapter_number'] #First adapter
+                            port = borderlinks['port'] #First port
+                            bports = { }
+
+                            for blink in range(0, bordercount): #Add for total nr of borderlinks needed the port details
+                                blinknr = blink+1 #Start @1
+                                bports[str(blinknr)] = { "adapter_number" : adapter, "port" : port }
+                                adapter += adapterstep #Next adapter
+                                port += portstep #Next port
+                   
+
                         vltarray = []
                         jsonadd = {}
+
                         if vlti['count'] > 0:
                             vltlinks = vlti['count']
                             vltadapter = vlti['1st_adapter_number']
@@ -445,15 +494,22 @@ def provisiongns3project (jsonobject):
                         #print(nodename)
                         #print(ports)
                         mac = basemac + str(macstart) + macadd
-
+                        if template == 'border':
+                            #nr = bswitchnr+100
+                            nr = switchnr
+                        else: nr = switchnr
+                        #print(bports)
                         newdict['nodes'][nodename] = {  "vlt" : vltarray,
-                                                        "nr" : str(switchnr),
+                                                        "nr" : str(nr),
                                                         "nodeid" : nodeid,
                                                         "interlinks" : ports,
+                                                        "borderlinks" : bports,
                                                         "mgtport" : mgtport, #Add nodeid & ports to hostname for later usage
                                                         "mac" : mac }
 
                         macstart += 1
+
+    #print(newdict)
 
 
     #Add hostname and mac address to created nodes
@@ -476,42 +532,66 @@ def provisiongns3project (jsonobject):
     print('Creating links between elements...')
     time.sleep(0.5)
     
-    for nodename in newdict['nodes']: #Cycle through list wih node names (leaf1, leaf2, spine1, spine2, etc)
+    for nodename in newdict['nodes']: #Cycle through list wih node names (leaf1, leaf2, spine1, spine2, border1 etc)
         obj =  newdict['nodes'][nodename] #This is dict of node with links nr, ports, nodeid
-        
+        #print(obj) 
         if 'leaf' in nodename: #When found a leaf
             leafnr = nodename.lstrip('leaf') #What is the leaf nr
-            mynodeid = obj['nodeid']
-            linkcnt = len(obj['interlinks']) #How many interlinks on the leaf
+            mynodeid = obj['nodeid'] #Node ID of leaf
+           
+            linkcnt = 0
 
-            for link in range (linkcnt): #Loop through all links for this node
-                mylinkarray = [] #Array with the json data to create a link
-                linknr = link+1 #Start count at 1 (these numbers are in the dict)
-                myadapter = obj['interlinks'][str(linknr)]['adapter_number']
-                myport = obj['interlinks'][str(linknr)]['port']
-                spine = 'spine'+str(linknr) #Which spine are we connected
-                linkpeerid = newdict['nodes'][spine]['nodeid'] #Id of spine
-                linkpeeradapter = newdict['nodes'][spine]['interlinks'][leafnr]['adapter_number']
-                linkpeerport = newdict['nodes'][spine]['interlinks'][leafnr]['port']
+            for cnt in range(2):
 
-                #Add to array with two json objects for one link
-                cnt = 0
-                for cnt in range(2):
-                    if cnt == 1: #Add my side of link
-                        linkobj = { "node_id" : mynodeid, "adapter_number" : myadapter, "port_number" : myport }
-                    else: #Add peer side of link
-                        linkobj = { "node_id" : linkpeerid, "adapter_number" : linkpeeradapter, "port_number" : linkpeerport }
+                linktype = ""
 
-                    mylinkarray.append(linkobj) #create array with to JSON objects, is for 1 link
+                if cnt == 0:
+                    linktype = 'interlinks'
+                    linkcnt = len(obj[linktype]) #How many interlinks on the leaf
+                    print(nodename + ' has ' + str(linkcnt) + ' interlinks.')
+
+                if cnt == 1:
+                    linktype = 'borderlinks'
+                    linkcnt = len(obj[linktype]) #How many interlinks on the leaf
+                    print(nodename + ' has ' + str(linkcnt) + ' borderlinks.')
+
+                for link in range (linkcnt): #Loop through all links for this node
+                    mylinkarray = [] #Array with the json data to create a link
+                    linknr = link+1 #Start count at 1 (these numbers are in the dict)
+                    myadapter = obj[linktype][str(linknr)]['adapter_number']
+                    myport = obj[linktype][str(linknr)]['port']
+                    if linktype == 'interlinks':
+                       peerswitchprefix = 'spine'
+                    elif linktype == 'borderlinks':
+                       peerswitchprefix = 'border'
+
+                    #print(newdict['nodes'])
+                    peerswitch = peerswitchprefix + str(linknr)  #Which peer switch are we connected
+                    linkpeerid = newdict['nodes'][peerswitch]['nodeid'] #Id of spine
+                    linkpeeradapter = newdict['nodes'][peerswitch][linktype][leafnr]['adapter_number']
+                    linkpeerport = newdict['nodes'][peerswitch][linktype][leafnr]['port']
+                    #print('peerswitch :', peerswitch, 'linkpeerport :', linkpeerport)
+
+                    #Add to array with two json objects for one link
                     
-                jsonadd = { "nodes" : mylinkarray } #This is json for the api call to create a link
-                urltuple = ( linkurl, httpheaders )
-                print('Create link between ' + nodename + ' and ' + spine)
-                resp = request ( urltuple, "post", jsonadd ) #create link
-                #print(resp)
-                time.sleep(0.5)
+                    for mycnt in range(2):
+                        if mycnt == 0: #Add my side of link
+                            linkobj = { "node_id" : mynodeid, "adapter_number" : myadapter, "port_number" : myport }
+                        elif mycnt == 1: #Add peer side of link
+                            linkobj = { "node_id" : linkpeerid, "adapter_number" : linkpeeradapter, "port_number" : linkpeerport }
 
+                        mylinkarray.append(linkobj) #create array with to JSON objects, is for 1 link
+                    
+                    jsonadd = { "nodes" : mylinkarray } #This is json for the api call to create a link
+                    #print(nodename, peerswitch, jsonadd)
+                    urltuple = ( linkurl, httpheaders )
+                    #print('Create link between ' + nodename + ' and ' + peerswitch)
+                    resp = request ( urltuple, "post", jsonadd ) #create link
+                    time.sleep(0.5)
+
+        
         vltlinks = len(obj['vlt'])
+
         if vltlinks != 0: #Need to add vlt links
             switchnr = int(obj['nr'])
             peerswitchnr = switchnr+1
@@ -523,6 +603,7 @@ def provisiongns3project (jsonobject):
                     
             mylinkarray = []
             if (switchnr % 2) != 0: #Odd switchnr
+                #print('switchnr',switchnr)
                 for cnt in range(vltlinks): #Loop through all vlt links
                     mylinkarray.append(obj['vlt'][cnt])
                     mylinkarray.append(peervltlinkarray[cnt])
@@ -543,7 +624,7 @@ def provisiongns3project (jsonobject):
         clouddict = newdict['clouds'][cloud]
         
         for fabricrole in newdict['nodes']:
-            if 'leaf' in fabricrole or 'spine' in fabricrole:
+            if 'leaf' in fabricrole or 'spine' in fabricrole or 'border' in fabricrole:
                 dictobj = newdict['nodes'][fabricrole]
                 switchnr = dictobj['nr']
                 if str(cloud) == (str(switchnr)): #Found match to build link between cloud and switch
@@ -687,7 +768,9 @@ if 'creategns3project' in sys.argv[1:]: #Add nodes to project in GNS3
         print(json.loads(response)['message'])
         print('If you want to rebuild, please delete the project from GNS3.')
         print('Then restart.')
-        """
+       
+        #This block is for testing, comment if done testen
+        #"""
         resp = json.loads(request ( urltuple, "get" )) #Query project to find ID
         #print(resp)
         #print(urltuple)
@@ -695,9 +778,10 @@ if 'creategns3project' in sys.argv[1:]: #Add nodes to project in GNS3
             if obj['name'] == urltuple[3]['name']:
                 print('Project ID : ' + obj['project_id'])
                 response = json.dumps(obj)
-        """
+        #"""
+
         print('proceed = True')
-        sys.exit()
+        #sys.exit() #Activate when done testing
     else:
         projectid = json.loads(response)['project_id']
         print('Project ' + projectid + ' created.')
