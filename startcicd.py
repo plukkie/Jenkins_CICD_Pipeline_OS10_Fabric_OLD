@@ -326,14 +326,75 @@ def provisiongns3project (jsonobject):
     leafcount = templatedict['leaf']['count']
     spinecount = templatedict['spine']['count']
     bordercount = templatedict['border']['count']
+    hosts = templatedict['leaf']['hosts']
     url = baseurl + '/' + templatesuri
     urltuple = ( url, httpheaders )
     templates = request ( urltuple, "get" )
     jsondict = json.loads(templates) #All templates found in GNS3 server
-    newdict = { "nodes" : {}, "clouds" : {} }
+    newdict = { "nodes" : {}, "clouds" : {}, "hostlinkarray" : [] }
     jsonadd = {}
     switchnr = 0 #counter for only leaf & spine switches
     bswitchnr = 0
+    projecturl = baseurl + '/' + projecturi + '/' + projectid
+
+    #First create Host nodes
+    hostlinkarray = [] #This array is used to create links between leafs and hosts
+    hostcount = hosts['count'] #This is hostcount per leafpair
+
+    if hostcount > 0: #need to build hosts
+
+        hosttemplatename = hosts['name']
+        leaflinkjson = hosts['leaflinks']
+        hostlinkjson = hosts['hostlinks']
+        hostpos = templatedict['leaf']['pos']
+        posshift = nd['posshift']
+        createnodeurl = projecturl + '/templates'
+
+        for tn in jsondict: #Loop through available templates in GNS3 and find id
+            if tn['name'] == hosttemplatename: #Found template match
+                tid = tn['template_id'] #VNF Template ID from GNS3
+                print('Found template for Hostnode with id ' + tid + ' with name ' + hosttemplatename)
+                urltuple = ( createnodeurl+'/'+tid, httpheaders )
+                startx = hostpos['x'] + int(posshift/2) 
+                starty = hostpos['y'] + int(posshift)
+                i = 0
+                linkarray = [ ]
+
+                for cnt in range(int(leafcount/2)): #For all leafpairs, create hostnodes
+                    leafpair = cnt+1
+                    x = startx + cnt*posshift*2 
+                    y = starty
+                    hostadapterstep = hostlinkjson['adapterstep']
+                    hostportstep    = hostlinkjson['portstep']
+                    leafadapterstep = leaflinkjson['adapterstep']
+                    leafportstep    = leaflinkjson['portstep']
+                    hostadapter = hostlinkjson['1st_adapter_number']
+                    hostport    = hostlinkjson['port']
+                    leafadapter = leaflinkjson['1st_adapter_number']
+                    leafport    = leaflinkjson['port']
+
+                    for host in range(hostcount): #Create all hosts per leafpair
+
+
+                        jsonadd = { "x" : x, "y" : y } #Position of the node on GNS raster
+                        resp = json.loads(request ( urltuple, "post", jsonadd )) #create node in project
+                        nodeid = resp['node_id'] #Get nodeid for later usage
+                        time.sleep(0.5)
+                        x += int(posshift/3) #How much to shift position for next device icon
+                        y += int(posshift/3) #How much to shift position for next device icon
+
+                        for linkcnt in range(2): #Create both link objects for later usage
+                            linkobject = { "node_id" : nodeid, "adapter_number" : hostadapter, "port_number" : hostport }
+                            hostlinkarray.append(linkobject)
+                            linkobject = { "node_id" : "leaf"+str(leafpair+cnt+linkcnt), "adapter_number" : leafadapter, "port_number" : leafport }
+                            hostlinkarray.append(linkobject)
+                            hostadapter += hostadapterstep
+                            hostport += hostportstep
+
+                        leafadapter += leafadapterstep
+                        leafport += leafportstep
+
+        newdict['hostlinkarray'] = hostlinkarray #Replace later the leafname by node_id of leaf
 
 
     for template in templatedict: #Loop through desired templates from settingsfile
@@ -479,7 +540,7 @@ def provisiongns3project (jsonobject):
                         vltarray = []
                         jsonadd = {}
 
-                        if vlti['count'] > 0:
+                        if vlti['count'] > 0: #Found VLTi links
                             vltlinks = vlti['count']
                             vltadapter = vlti['1st_adapter_number']
                             vltport = vlti['port'] 
@@ -526,18 +587,27 @@ def provisiongns3project (jsonobject):
         resp = request ( urltuple, "put", jsonadd ) #Update node config
         time.sleep(0.5)
 
-   
+
     #Add links to nodes
     linkurl = url + '/links' #Url to create links
-    print('Creating links between elements...')
+    #print('Creating links between elements...')
     time.sleep(0.5)
-    
+
     for nodename in newdict['nodes']: #Cycle through list wih node names (leaf1, leaf2, spine1, spine2, border1 etc)
         obj =  newdict['nodes'][nodename] #This is dict of node with links nr, ports, nodeid
-        #print(obj) 
+
         if 'leaf' in nodename: #When found a leaf
             leafnr = nodename.lstrip('leaf') #What is the leaf nr
             mynodeid = obj['nodeid'] #Node ID of leaf
+            
+            #Need to replace leafname with nodeid in hostlinkarray
+            for idx, item in enumerate(newdict['hostlinkarray']):
+                if item['node_id'] == nodename:
+                    item['node_id'] = mynodeid
+                    print('Replaced linkarray pos ' + str(idx) + ',' + nodename + ' with node_id ' + mynodeid)
+                    newdict['hostlinkarray'][idx] = item
+                
+                    break
            
             linkcnt = 0
 
@@ -585,10 +655,13 @@ def provisiongns3project (jsonobject):
                     jsonadd = { "nodes" : mylinkarray } #This is json for the api call to create a link
                     #print(nodename, peerswitch, jsonadd)
                     urltuple = ( linkurl, httpheaders )
-                    #print('Create link between ' + nodename + ' and ' + peerswitch)
+                    print('Create link between ' + nodename + ' and ' + peerswitch)
                     resp = request ( urltuple, "post", jsonadd ) #create link
                     time.sleep(0.5)
 
+
+
+        #print(newdict['hostlinkarray'])
         
         vltlinks = len(obj['vlt'])
 
@@ -619,7 +692,24 @@ def provisiongns3project (jsonobject):
                     #linkobj = { "node_id" : mynodeid, "adapter_number" : myadapter, "port_number" : myport }
                     #print(nodename)
 
-    #print(newdict)
+
+    #Adding links between Hosts and Leafs
+    if hostcount > 0:
+        counter  = 0
+        array = []
+
+        print('Create links between hosts and leafs...')
+        for index, linkitem in enumerate(newdict['hostlinkarray']):
+            array.append(linkitem) 
+            counter += 1
+            if counter == 2:
+                jsonadd = { "nodes" : array }
+                resp = request ( urltuple, "post", jsonadd ) #create link
+                #print(resp)
+                counter = 0
+                array = []
+
+
     for cloud in newdict['clouds']: #Cycle through clouds for mgt connections
         clouddict = newdict['clouds'][cloud]
         
